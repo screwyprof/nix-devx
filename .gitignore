@@ -33,6 +33,7 @@ go.work.sum
 # .vscode/
 .direnv/
 .devcontainer/docker-compose.override.yml
+.devcontainer/.envrc
 
 # AI
 .serena/

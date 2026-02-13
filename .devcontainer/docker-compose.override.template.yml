@@ -1,0 +1,5 @@
+services:
+  gopher-dev:
+    volumes:
+      # Mount container-specific .envrc (edit .devcontainer/.envrc to customize)
+      - .devcontainer/.envrc:/workspaces/.envrc:ro
