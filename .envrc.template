@@ -1,14 +1,20 @@
 # Example .envrc for host development
-# Copy this file to .envrc and customize, or use: source_env .envrc.template
-
-# On host: inject secrets without loading the nix shell
-# (The nix shell runs inside the container via .devcontainer/.envrc)
-
-if has sops; then
-  export ANTHROPIC_AUTH_TOKEN=$(sops -d --extract '["service"]["api_key"]' ~/path/to/secrets.yaml)
-fi
+# 
+# Keep in mind that this file won't be copied to the .devcontainer by default
+# You can adjust .devcontainer/.envrc instead
+#
+# You can inject secrets using sops:
+# if has sops; then
+#  export ANTHROPIC_AUTH_TOKEN=$(sops -d --extract '["service"]["api_key"]' ~/path/to/secrets.yaml)
+# fi
 
 # Or use 1password CLI:
 # if has op; then
 #   export ANTHROPIC_AUTH_TOKEN=$(op item get --fields label=password "My API Key")
 # fi
+
+# Create .envrc in the project root and customize to your liking, e.g.:
+# source_env .envrc.template
+
+# Run nix by default
+use flake .

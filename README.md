@@ -6,9 +6,17 @@ An example project demonstrating a configurable dev environment. This setup supp
 
 I run Claude Code and VS Code extensions inside a dev container (which itself runs in a VM) for isolation. On my host, VS Code is managed by Nix with minimal trusted extensions with all settings in read only mode. Nix also manages my secrets and dev tooling.
 
+## Philosophy
+
+This is an **example** of how to set up a flexible dev environment. The key idea is providing choice:
+
+- Host or container? Your choice
+- Direnv or manual? Your choice
+- `.envrc` or `.env`? Your choice
+
 ## Quick Start
 
-### Dev Container (Recommended)
+### Dev Container
 
 1. Set `ANTHROPIC_AUTH_TOKEN` in your environment
 2. Open in VS Code and run `Dev Containers: Reopen in Container`
@@ -23,7 +31,7 @@ If you use direnv, you can create `.envrc` to inject secrets using your password
 
 ### Optional: Inject Secrets via Docker Compose
 
-Alternatively, create `.devcontainer/docker-compose.override.yml` with an env file:
+Alternatively `.devcontainer/docker-compose.override.yml` auto-loads an env file:
 
 ```yaml
 services:
@@ -63,20 +71,10 @@ fi
 use flake .
 ```
 
-## Claude Code Integration
+## Nix flake Claude Code Integration
 
 Includes MCP servers:
 - **context7** - Library documentation
 - **memory** - Knowledge graph
 - **sequential-thinking** - Structured problem solving
 - **serena** - Semantic code navigation
-
-## Philosophy
-
-This is an **example** of how I set up flexible dev environments. The key idea is providing choice:
-
-- Host or container? Your choice
-- Direnv or manual? Your choice
-- What goes in `.envrc`? Your choice
-
-The flake.nix is project-specific and provides the reproducible baseline for this project. Adapt this pattern to your own needs.

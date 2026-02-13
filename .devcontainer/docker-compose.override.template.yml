@@ -1,5 +1,8 @@
 services:
   gopher-dev:
+    env_file:
+      - path: ../.env  # Your .env file (git-ignored)
+        required: false # Makes the file optional. Default value is 'true'
     volumes:
-      # Mount container-specific .envrc (edit .devcontainer/.envrc to customize)
-      - .devcontainer/.envrc:/workspaces/.envrc:ro
+      # container specific .envrc
+      - ./.envrc.container:/workspaces/.envrc:ro

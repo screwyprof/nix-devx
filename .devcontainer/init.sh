@@ -1,9 +1,15 @@
-#!/usr/bin/env bash
-set -euo pipefail
+#!/usr/bin/env sh
 
-# Copy templates if targets don't exist
-[ ! -f .devcontainer/docker-compose.override.yml ] && \
-  cp .devcontainer/docker-compose.override.template.yml .devcontainer/docker-compose.override.yml
+# Use absolute paths or ensure we are in the right spot
+CDIR="$(cd "$(dirname "$0")" && pwd)"
+ROOT="$(cd "$CDIR/.." && pwd)"
 
-[ ! -f .devcontainer/.envrc ] && \
-  cp .devcontainer/.envrc.template .devcontainer/.envrc
+# Copy templates only if they don't exist
+if [ ! -f "$ROOT/.devcontainer/docker-compose.override.yml" ]; then
+    cp "$ROOT/.devcontainer/docker-compose.override.template.yml" "$ROOT/.devcontainer/docker-compose.override.yml"
+fi
+
+# Ensure the .envrc for the container is ready
+if [ ! -f "$ROOT/.devcontainer/.envrc.container" ]; then
+    cp "$ROOT/.devcontainer/.envrc.template" "$ROOT/.devcontainer/.envrc.container"
+fi
