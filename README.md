@@ -29,15 +29,30 @@ That's it! Nix and direnv inside the container handle everything.
 
 If you use direnv, you can create `.envrc` to inject secrets using your password manager or secrets manager (sops, 1password, etc.). See `.envrc.template` for examples.
 
-### Optional: Inject Secrets via Docker Compose
+### Optional: Inject Secrets via `.env` File
 
-Alternatively `.devcontainer/docker-compose.override.yml` auto-loads an env file:
+Alternatively, create a `.env` file in the project root (git-ignored). The docker-compose override will auto-load it:
 
-```yaml
-services:
-  gopher-dev:
-    env_file:
-      - .env  # Your secrets file (git-ignored)
+```bash
+# .env
+ANTHROPIC_AUTH_TOKEN=sk-ant-...
+```
+
+> **Note**: For better security practices, consider using a password/secret manager to retrieve secrets (see direnv examples above).
+
+### Optional: Shift+Enter in Terminal (macOS)
+
+On macOS, if you want `Shift+Enter` to create a newline in terminals (for multi-line input), add this to your Mac's VSCode keybindings (`Cmd+Shift+P` → "Preferences: Open Keyboard Shortcuts (JSON)"):
+
+```json
+[
+  {
+    "key": "shift+enter",
+    "command": "workbench.action.terminal.sendSequence",
+    "args": { "text": "\\u001B\\u000A" },
+    "when": "terminalFocus"
+  }
+]
 ```
 
 ### Optional: Use Nix on Host
