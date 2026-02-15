@@ -52,6 +52,7 @@
 	"customizations": {
     	"vscode": {
       		"extensions": [
+				"anthropic.claude-code",
         		"jnoortheen.nix-ide",
         		"mkhl.direnv",
         		"golang.go",

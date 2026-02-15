@@ -1,8 +1,7 @@
 #!/usr/bin/env sh
 
-# Use absolute paths or ensure we are in the right spot
-CDIR="$(cd "$(dirname "$0")" && pwd)"
-ROOT="$(cd "$CDIR/.." && pwd)"
+# Ensure we're working from the project root
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
 # Copy templates only if they don't exist
 if [ ! -f "$ROOT/.devcontainer/docker-compose.override.yml" ]; then
@@ -10,6 +9,6 @@ if [ ! -f "$ROOT/.devcontainer/docker-compose.override.yml" ]; then
 fi
 
 # Ensure the .envrc for the container is ready
-if [ ! -f "$ROOT/.devcontainer/.envrc.container" ]; then
-    cp "$ROOT/.devcontainer/.envrc.template" "$ROOT/.devcontainer/.envrc.container"
+if [ ! -f "$ROOT/.devcontainer/.envrc" ]; then
+    cp "$ROOT/.devcontainer/.envrc.template" "$ROOT/.devcontainer/.envrc"
 fi

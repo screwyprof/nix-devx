@@ -5,4 +5,4 @@ services:
         required: false # Makes the file optional. Default value is 'true'
     volumes:
       # container specific .envrc
-      - ./.envrc.container:/workspaces/.envrc:ro
+      - ./.envrc:/workspaces/.envrc:ro
