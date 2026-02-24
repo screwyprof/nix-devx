@@ -4,7 +4,7 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     claude-module = {
-      url = "path:./claude-module";
+      url = "path:./modules/ai/claude";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
