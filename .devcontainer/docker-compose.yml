@@ -14,7 +14,7 @@ services:
     # https://code.claude.com/docs/en/settings#environment-variables
     environment:
       - ANTHROPIC_AUTH_TOKEN=${ANTHROPIC_AUTH_TOKEN}
-      - ANTHROPIC_MODEL=glm-4.7
+      - ANTHROPIC_MODEL=glm-5
       - ANTHROPIC_DEFAULT_OPUS_MODEL=glm-4.7
       - ANTHROPIC_DEFAULT_SONNET_MODEL=glm-4.7
       - ANTHROPIC_DEFAULT_HAIKU_MODEL=glm-4.5-air
@@ -32,7 +32,7 @@ services:
       - CLAUDE_CODE_IDE_SKIP_AUTO_INSTALL=1
       - CLAUDE_CODE_SKIP_AUTH_LOGIN=1
       - CLAUDE_CODE_TMPDIR=/tmp
-      - CLAUDE_CODE_SHELL bash/zsh
+      - CLAUDE_CODE_SHELL=bash/zsh
     volumes:
       - ..:/workspaces:cached
       - nix-store:/nix
