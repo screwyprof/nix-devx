@@ -34,6 +34,7 @@
         imports = [
           git-hooks.flakeModule
           ./modules/ai/claude
+          ./modules/ai/bmad-method
           ./modules/languages/nix
           ./modules/languages/go
           ./modules/languages/rust
@@ -44,6 +45,7 @@
 
         flake.flakeModules = {
           ai-claude = import ./modules/ai/claude;
+          ai-bmad-method = import ./modules/ai/bmad-method;
           languages-nix = import ./modules/languages/nix;
           languages-go = import ./modules/languages/go;
           languages-rust = import ./modules/languages/rust;
