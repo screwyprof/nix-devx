@@ -2,10 +2,16 @@
 {
   imports = [
     inputs.git-hooks.flakeModule
+    inputs.mcp-servers-nix.flakeModule
   ];
 
   perSystem =
-    { config, pkgs, ... }:
+    {
+      config,
+      pkgs,
+      system,
+      ...
+    }:
     {
       # Enable Nix language for this repository
       languages.nix.enable = true;
@@ -28,10 +34,39 @@
         ];
       };
 
+      # Allow unfree packages (needed for claude-code)
+      _module.args.pkgs = import inputs.nixpkgs {
+        inherit system;
+        config.allowUnfree = true;
+      };
+
+      # Configure Claude Code
+      ai.claude = {
+        enable = true;
+        dangerouslySkipPermissions = true;
+        baseUrl = "https://api.z.ai";
+        models = {
+          default = "glm-5";
+          opus = "glm-4.7";
+          sonnet = "glm-4.7";
+          haiku = "glm-4.5-air";
+        };
+      };
+
+      # Configure MCP servers
+      mcp-servers = {
+        programs = {
+          memory.enable = true;
+          sequential-thinking.enable = true;
+        };
+        flavors.claude-code.enable = true;
+      };
+
       # Default development shell for this repo
       devShells.default = pkgs.mkShellNoCC {
         inputsFrom = [
           config.devShells.nix
+          config.devShells.claude
         ];
 
         shellHook = ''
@@ -40,8 +75,9 @@
           echo "Development shell for this repository"
           echo ""
           echo "Available devShells:"
-          echo "  nix develop .#default    - This shell (Nix tooling)"
-          echo "  nix develop .#nix        - Nix development"
+          echo "  nix develop .#default    - This shell (Nix + Claude tooling)"
+          echo "  nix develop .#nix        - Nix development only"
+          echo "  nix develop .#claude     - Claude Code only"
           echo ""
         '';
       };
