@@ -62,6 +62,11 @@
             _module.args.pkgs = import nixpkgs {
               inherit system;
               config.allowUnfree = true;
+              overlays = [
+                (_: prev: {
+                  ai = prev.callPackage ./pkgs/ai { };
+                })
+              ];
             };
 
             languages.nix.enable = true;

@@ -27,7 +27,12 @@ in
         pre-commit.settings.hooks = {
           nixfmt.enable = true;
           statix.enable = true;
-          deadnix.enable = true;
+          deadnix = {
+            enable = true;
+            settings = {
+              noLambdaPatternNames = true;
+            };
+          };
           nil.enable = true;
           flake-checker.enable = true;
         };
