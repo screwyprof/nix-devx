@@ -18,91 +18,28 @@
     nix-filter = {
       url = "github:numtide/nix-filter";
     };
+
+    import-tree.url = "github:vic/import-tree";
   };
 
   outputs =
-    inputs@{
-      nixpkgs,
-      flake-parts,
-      git-hooks,
-      ...
-    }:
-    flake-parts.lib.mkFlake { inherit inputs; } (
+    inputs:
+    inputs.flake-parts.lib.mkFlake { inherit inputs; } (
       { lib, ... }:
       {
-        imports = [
-          git-hooks.flakeModule
-          ./modules/ai/claude
-          ./modules/ai/bmad-method
-          ./modules/languages/nix
-          ./modules/languages/go
-          ./modules/languages/rust
-          inputs.mcp-servers-nix.flakeModule
-        ];
-
-        systems = lib.systems.flakeExposed;
+        imports = [ inputs.import-tree ./modules ];
 
         flake.flakeModules = {
-          ai-claude = import ./modules/ai/claude;
-          ai-bmad-method = import ./modules/ai/bmad-method;
-          languages-nix = import ./modules/languages/nix;
-          languages-go = import ./modules/languages/go;
-          languages-rust = import ./modules/languages/rust;
+          ai-claude = import ./modules/ai/claude.nix;
+          ai-bmad-method = import ./modules/ai/bmad-method.nix;
+          languages-nix = import ./modules/languages/nix.nix;
+          languages-go = import ./modules/languages/go.nix;
+          languages-rust = import ./modules/languages/rust.nix;
         };
 
         perSystem =
+          { config, pkgs, ... }:
           {
-            config,
-            pkgs,
-            system,
-            ...
-          }:
-          {
-            _module.args.pkgs = import nixpkgs {
-              inherit system;
-              config.allowUnfree = true;
-              overlays = [
-                (_: prev: {
-                  ai = prev.callPackage ./pkgs/ai { };
-                })
-              ];
-            };
-
-            languages.nix.enable = true;
-
-            pre-commit.settings.src = inputs.nix-filter.lib.filter {
-              root = ./.;
-              include = [
-                (inputs.nix-filter.lib.matchExt "nix")
-                "flake.lock"
-              ];
-              exclude = [
-                ".direnv"
-                ".git"
-                "result"
-              ];
-            };
-
-            ai.claude = {
-              enable = true;
-              dangerouslySkipPermissions = true;
-              baseUrl = "https://api.z.ai";
-              models = {
-                default = "glm-5";
-                opus = "glm-4.7";
-                sonnet = "glm-4.7";
-                haiku = "glm-4.5-air";
-              };
-            };
-
-            mcp-servers = {
-              programs = {
-                memory.enable = true;
-                sequential-thinking.enable = true;
-              };
-              flavors.claude-code.enable = true;
-            };
-
             devShells.default = pkgs.mkShell {
               inputsFrom = [ config.devShells.claude ];
               shellHook = ''
