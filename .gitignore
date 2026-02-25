@@ -39,3 +39,6 @@ go.work.sum
 .serena/
 .mcp.json
 .claude/
+
+# pre-commit hooks
+.pre-commit-config.yaml
