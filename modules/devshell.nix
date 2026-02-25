@@ -67,10 +67,11 @@
         inputsFrom = [
           config.devShells.nix
           config.devShells.claude
-          config.pre-commit.devShell
         ];
 
         shellHook = ''
+          rm -r .pre-commit-config.yaml
+          ${config.pre-commit.shellHook}
           echo "🦊 Gopher's Environment Hub"
           echo "=========================="
           echo "Development shell for this repository"
