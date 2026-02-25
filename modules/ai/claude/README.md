@@ -8,45 +8,71 @@ In your project's `flake.nix`:
 
 ```nix
 {
+  description = "Test flake using the claude module as an external user";
+
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     flake-parts.url = "github:hercules-ci/flake-parts";
-    claude-module.url = "github:yourusername/claude-module";  # or path:../claude-module
+    nix-templates = {
+      # For testing: use path:../.., for production: use github:screwyprof/nix-templates
+      url = "path:../..";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    mcp-servers-nix = {
+      url = "github:natsukium/mcp-servers-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = inputs@{ flake-parts, claude-module, ... }:
-    flake-parts.lib.mkFlake { inherit inputs; } ({ lib, ... }: {
-      systems = lib.systems.flakeExposed;
-      imports = [ claude-module.flakeModule ];
+  outputs =
+    inputs@{
+      nixpkgs,
+      flake-parts,
+      mcp-servers-nix,
+      nix-templates,
+      ...
+    }:
+    flake-parts.lib.mkFlake { inherit inputs; } (
+      { lib, ... }:
+      {
+        imports = [
+          nix-templates.flakeModules.ai-claude
+          mcp-servers-nix.flakeModule
+        ];
 
-      perSystem = { config, system, ... }: {
-        # Allow unfree packages (required for claude-code)
-        _module.args.pkgs = import inputs.nixpkgs {
-          inherit system;
-          config.allowUnfree = true;
-        };
+        systems = lib.systems.flakeExposed;
 
-        # Claude configuration
-        claude = {
-          enable = true;
-          baseUrl = "https://api.anthropic.com";
-          models.default = "claude-sonnet-4-20250514";
-        };
+        perSystem =
+          { system, ... }:
+          {
+            _module.args.pkgs = import nixpkgs {
+              inherit system;
+              config.allowUnfree = true;
+            };
 
-        # MCP servers configuration (exposed via claude-module)
-        mcp-servers = {
-          programs = {
-            context7.enable = true;
-            memory.enable = true;
-            sequential-thinking.enable = true;
-            serena.enable = true;
+            ai.claude = {
+              enable = true;
+              dangerouslySkipPermissions = true;
+              baseUrl = "https://api.z.ai";
+              models = {
+                default = "glm-5";
+                opus = "glm-4.7";
+                sonnet = "glm-4.7";
+                haiku = "glm-4.5-air";
+              };
+            };
+
+            mcp-servers = {
+              programs = {
+                memory.enable = true;
+                sequential-thinking.enable = true;
+              };
+              flavors.claude-code.enable = true;
+            };
           };
-          flavors.claude-code.enable = true;
-        };
-
-        devShells.default = config.packages.claude-dev-shell;
-      };
-    });
+      }
+    );
 }
 ```
 
@@ -123,7 +149,7 @@ The following environment variables can be set externally to override Nix defaul
 
 ## Development Shell
 
-The `claude-dev-shell` package provides a complete development shell with:
+The `config.devShells.claude` package provides a complete development shell with:
 - `claude` binary in PATH
 - All enabled MCP server packages
 - Configured environment variables
@@ -133,7 +159,3 @@ Enter the shell with:
 ```bash
 nix develop
 ```
-
-## License
-
-This module is provided as-is for use with Claude Code development environments.

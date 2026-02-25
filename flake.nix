@@ -10,7 +10,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # Ensure you have the MCP servers input here so your module can find it
     mcp-servers-nix = {
       url = "github:natsukium/mcp-servers-nix";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -104,7 +103,6 @@
               flavors.claude-code.enable = true;
             };
 
-            # Use Claude devShell and add git hooks + MCP servers for THIS repo
             devShells.default = pkgs.mkShell {
               inputsFrom = [ config.devShells.claude ];
               shellHook = ''
