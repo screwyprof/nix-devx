@@ -36,6 +36,7 @@
           ./modules/ai/claude
           ./modules/languages/nix
           ./modules/languages/go
+          ./modules/languages/rust
           inputs.mcp-servers-nix.flakeModule
         ];
 
@@ -45,6 +46,7 @@
           ai-claude = import ./modules/ai/claude;
           languages-nix = import ./modules/languages/nix;
           languages-go = import ./modules/languages/go;
+          languages-rust = import ./modules/languages/rust;
         };
 
         perSystem =
