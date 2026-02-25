@@ -28,35 +28,36 @@ in
           default = "\${XDG_DATA_HOME:-$HOME/.local/share}/go";
           description = "Go path for module cache";
         };
+
+        hooks = mkEnableOption "recommended git hooks for Go";
       };
 
       config = mkIf cfg.enable {
-        packages = {
-          inherit (pkgs)
-            go
-            gopls
-            delve
-            gotools
-            golangci-lint
-            ;
-        };
-
-        # Configure git-hooks settings (used for checks)
-        # pre-commit.settings.hooks = {
-        #   gofmt.enable = true;
-        #   go-mod-tidy.enable = true;
-        #   golangci-lint.enable = true;
-        #   golangci-lint-types = true;
+        # Packages are only needed if you want to expose them at the flake level
+        # For now, we'll keep the devShell self-contained
+        # packages = {
+        #   inherit (pkgs) go gopls delve gotools golangci-lint;
         # };
+
+        # Configure git hooks (only if hooks.enable is true)
+        pre-commit.settings.hooks = mkIf cfg.hooks {
+          golangci-lint = {
+            enable = true;
+            types_or = [ "go" ];
+          };
+        };
 
         # Self-contained Go devShell
         devShells.go = pkgs.mkShellNoCC {
-          buildInputs = with pkgs; [
+          nativeBuildInputs = with pkgs; [
             go
             gopls
             delve
             gotools
             golangci-lint
+            gofumpt
+            golines
+            gci
             gnumake
           ];
 

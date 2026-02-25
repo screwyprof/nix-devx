@@ -34,11 +34,30 @@
         "type": "github"
       }
     },
+    "flake-parts_2": {
+      "inputs": {
+        "nixpkgs-lib": "nixpkgs-lib_2"
+      },
+      "locked": {
+        "lastModified": 1769996383,
+        "narHash": "sha256-AnYjnFWgS49RlqX7LrC4uA+sCCDBj0Ry/WOJ5XWAsa0=",
+        "owner": "hercules-ci",
+        "repo": "flake-parts",
+        "rev": "57928607ea566b5db3ad13af0e57e921e6b12381",
+        "type": "github"
+      },
+      "original": {
+        "owner": "hercules-ci",
+        "repo": "flake-parts",
+        "type": "github"
+      }
+    },
     "git-hooks": {
       "inputs": {
         "flake-compat": "flake-compat",
         "gitignore": "gitignore",
         "nixpkgs": [
+          "gopher-env",
           "nixpkgs"
         ]
       },
@@ -59,6 +78,7 @@
     "gitignore": {
       "inputs": {
         "nixpkgs": [
+          "gopher-env",
           "git-hooks",
           "nixpkgs"
         ]
@@ -76,6 +96,27 @@
         "repo": "gitignore.nix",
         "type": "github"
       }
+    },
+    "gopher-env": {
+      "inputs": {
+        "flake-parts": "flake-parts_2",
+        "git-hooks": "git-hooks",
+        "import-tree": "import-tree",
+        "mcp-servers-nix": "mcp-servers-nix",
+        "nix-filter": "nix-filter",
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "path": "../..",
+        "type": "path"
+      },
+      "original": {
+        "path": "../..",
+        "type": "path"
+      },
+      "parent": []
     },
     "import-tree": {
       "locked": {
@@ -95,6 +136,7 @@
     "mcp-servers-nix": {
       "inputs": {
         "nixpkgs": [
+          "gopher-env",
           "nixpkgs"
         ]
       },
@@ -158,13 +200,25 @@
         "type": "github"
       }
     },
+    "nixpkgs-lib_2": {
+      "locked": {
+        "lastModified": 1769909678,
+        "narHash": "sha256-cBEymOf4/o3FD5AZnzC3J9hLbiZ+QDT/KDuyHXVJOpM=",
+        "owner": "nix-community",
+        "repo": "nixpkgs.lib",
+        "rev": "72716169fe93074c333e8d0173151350670b824c",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-community",
+        "repo": "nixpkgs.lib",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
         "flake-parts": "flake-parts",
-        "git-hooks": "git-hooks",
-        "import-tree": "import-tree",
-        "mcp-servers-nix": "mcp-servers-nix",
-        "nix-filter": "nix-filter",
+        "gopher-env": "gopher-env",
         "nixpkgs": "nixpkgs"
       }
     }
