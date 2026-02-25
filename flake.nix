@@ -35,6 +35,7 @@
           git-hooks.flakeModule
           ./modules/ai/claude
           ./modules/languages/nix
+          ./modules/languages/go
           inputs.mcp-servers-nix.flakeModule
         ];
 
@@ -43,6 +44,7 @@
         flake.flakeModules = {
           ai-claude = import ./modules/ai/claude;
           languages-nix = import ./modules/languages/nix;
+          languages-go = import ./modules/languages/go;
         };
 
         perSystem =
