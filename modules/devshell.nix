@@ -67,6 +67,7 @@
         inputsFrom = [
           config.devShells.nix
           config.devShells.claude
+          config.pre-commit.devShell
         ];
 
         shellHook = ''
