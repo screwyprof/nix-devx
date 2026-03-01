@@ -14,29 +14,16 @@ services:
     # https://code.claude.com/docs/en/settings#environment-variables
     environment:
       - ANTHROPIC_AUTH_TOKEN=${ANTHROPIC_AUTH_TOKEN}
-      - ANTHROPIC_MODEL=glm-5
-      - ANTHROPIC_DEFAULT_OPUS_MODEL=glm-4.7
-      - ANTHROPIC_DEFAULT_SONNET_MODEL=glm-4.7
-      - ANTHROPIC_DEFAULT_HAIKU_MODEL=glm-4.5-air
-      - ANTHROPIC_BASE_URL=https://api.z.ai/api/anthropic
-      - DISABLE_TELEMETRY=1
-      - DISABLE_AUTOUPDATER=1
-      - DISABLE_ERROR_REPORTING=1
-      - DISABLE_INSTALLATION_CHECKS=1
-      - IS_DEMO=1
-      - CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR=1
-      - CLAUDE_CONFIG_DIR=/home/vscode/.local/state/claude
-      - CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY=1
-      - CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1
-      - CLAUDE_CODE_ENABLE_TELEMETRY=0
-      - CLAUDE_CODE_IDE_SKIP_AUTO_INSTALL=1
-      - CLAUDE_CODE_SKIP_AUTH_LOGIN=1
-      - CLAUDE_CODE_TMPDIR=/tmp
-      - CLAUDE_CODE_SHELL=bash/zsh
+      - ANTHROPIC_MODEL=${ANTHROPIC_MODEL:-glm-5}
+      - ANTHROPIC_DEFAULT_OPUS_MODEL=${ANTHROPIC_DEFAULT_OPUS_MODEL:-glm-4.7}
+      - ANTHROPIC_DEFAULT_SONNET_MODEL=${ANTHROPIC_DEFAULT_SONNET_MODEL:-glm-4.7}
+      - ANTHROPIC_DEFAULT_HAIKU_MODEL=${ANTHROPIC_DEFAULT_HAIKU_MODEL:-glm-4.5-air}
+      - ANTHROPIC_BASE_URL=${ANTHROPIC_BASE_URL:-https://api.z.ai/api/anthropic}
+      - CLAUDE_CONFIG_DIR=/home/vscode/.claude
     volumes:
       - ..:/workspaces:cached
       - nix-store:/nix
-      - claude-data:/home/vscode/.local/state/claude
+      - claude-data:/home/vscode/.claude
 
     # Uncomment the next four lines if you will use a ptrace-based debugger like C++, Go, and Rust.
     cap_add:
