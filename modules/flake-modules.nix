@@ -1,4 +1,4 @@
-{ lib, ... }:
+{ lib, self, ... }:
 {
   flake.flakeModules = {
     languages-go = import ./languages/go.nix;
@@ -33,5 +33,7 @@
       path = ./../templates/claude;
       description = "Claude Code environment with MCP servers";
     };
+
+    default = self.templates.minimal;
   };
 }
