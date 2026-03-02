@@ -83,7 +83,6 @@
         ];
 
         shellHook = ''
-          rm -r .pre-commit-config.yaml
           ${config.pre-commit.shellHook}
           echo "nix-devx (container)"
           echo "===================="
