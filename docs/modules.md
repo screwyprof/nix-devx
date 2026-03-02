@@ -95,6 +95,14 @@ See [devcontainer.md](devcontainer.md) for host vs container setup with unrestri
 
 ### ai-bmad-method
 
+BMad Method is an AI-driven agile development framework with 12+ specialized agents
+(PM, Architect, Developer, UX, Scrum Master, etc.) and 34+ workflows for the complete
+software development lifecycle.
+
+- **GitHub:** https://github.com/bmad-code-org/BMAD-METHOD
+- **Documentation:** https://docs.bmad-method.org
+- **npm:** https://www.npmjs.com/package/bmad-method
+
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `enable` | bool | false | Enable BMad Method |
