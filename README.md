@@ -35,6 +35,7 @@ Modular development environments with flake-parts.
 
 ```bash
 nix flake init -t github:screwyprof/nix-devx#go
+nix flake init -t github:screwyprof/nix-devx#nix
 nix flake init -t github:screwyprof/nix-devx#rust
 nix flake init -t github:screwyprof/nix-devx#claude
 ```
@@ -66,3 +67,11 @@ nix flake init -t github:screwyprof/nix-devx#claude
 
 Dev containers can be customized via docker-compose overrides. direnv can be customized per-user via `.envrc` (not committed). This repo uses nix on host for secret injection only, and activates the flake inside the container - but you can do it differently.
 
+### Architecture
+
+This project follows the **[flake-parts](https://github.com/hercules-ci/flake-parts)** + **[nix-dendritic](https://github.com/blake-perrott/nix-dendritic)** pattern:
+
+- **flake-parts** provides composable flake modules with per-system configuration
+- **nix-dendritic** pattern emphasizes modular, importable flake outputs
+
+Each module is self-contained and can be imported independently, making it easy to mix and match language tooling, AI integrations, and development workflows.
