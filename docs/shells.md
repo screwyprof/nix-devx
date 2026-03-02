@@ -7,8 +7,10 @@ Ad-hoc development shells for use in any project without creating a flake.
 ```bash
 # Enter a shell in any directory
 cd any-project
-nix develop "github:screwyprof/nix-devx?dir=shells/go"
+nix develop "github:screwyprof/nix-devx?dir=shells/go" --no-write-lock-file
 ```
+
+> **Note:** Use `--no-write-lock-file` to prevent Nix from trying to write a lock file for remote flakes.
 
 ## Available Shells
 
@@ -17,7 +19,7 @@ nix develop "github:screwyprof/nix-devx?dir=shells/go"
 Go development environment.
 
 ```bash
-nix develop "github:screwyprof/nix-devx?dir=shells/go"
+nix develop "github:screwyprof/nix-devx?dir=shells/go" --no-write-lock-file
 ```
 
 **Tools:** go, gopls, delve, golangci-lint, gofumpt, golines, gci
@@ -29,7 +31,7 @@ nix develop "github:screwyprof/nix-devx?dir=shells/go"
 Rust development environment.
 
 ```bash
-nix develop "github:screwyprof/nix-devx?dir=shells/rust"
+nix develop "github:screwyprof/nix-devx?dir=shells/rust" --no-write-lock-file
 ```
 
 **Tools:** rustc, cargo, bacon, cargo-edit, cargo-audit, cargo-nextest, cargo-watch
@@ -41,7 +43,7 @@ nix develop "github:screwyprof/nix-devx?dir=shells/rust"
 Nix development environment.
 
 ```bash
-nix develop "github:screwyprof/nix-devx?dir=shells/nix"
+nix develop "github:screwyprof/nix-devx?dir=shells/nix" --no-write-lock-file
 ```
 
 **Tools:** nixfmt, statix, deadnix
@@ -53,7 +55,7 @@ nix develop "github:screwyprof/nix-devx?dir=shells/nix"
 Claude Code environment with MCP servers.
 
 ```bash
-nix develop "github:screwyprof/nix-devx?dir=shells/claude"
+nix develop "github:screwyprof/nix-devx?dir=shells/claude" --no-write-lock-file
 ```
 
 **Tools:** Claude Code, MCP servers (memory, sequential-thinking)
@@ -67,7 +69,7 @@ nix develop "github:screwyprof/nix-devx?dir=shells/claude"
 BMad Method framework for AI-driven development.
 
 ```bash
-nix develop "github:screwyprof/nix-devx?dir=shells/bmad-method"
+nix develop "github:screwyprof/nix-devx?dir=shells/bmad-method" --no-write-lock-file
 ```
 
 **Tools:** bmad-method CLI
