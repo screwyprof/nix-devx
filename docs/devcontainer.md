@@ -1,123 +1,79 @@
-# Dev Container Setup
+# Dev Container Patterns
 
-This project uses a dev container for isolated development. The setup is designed to be highly customizable.
+Use dev containers for isolated development. This guide shows the patterns - adapt them to your needs.
 
-## Key Concept: Host vs Container Separation
-
-The same project can behave differently on host and in container:
-
-| File | Host | Container |
-|------|------|-----------|
-| `.envrc` | Read by host direnv | Can be overridden |
-| `.devcontainer/.envrc` | Ignored | Used if mounted |
-
-This allows you to:
-- Skip nix on host, use it only in container
-- Use different devShells (`default` vs `container`)
-- Run AI agents only in isolated environments
-
-## The Override Pattern
-
-The dev container uses Docker Compose with overrides:
+## The Pattern
 
 ```
-.devcontainer/
-├── docker-compose.yml                   # Base configuration
-├── docker-compose.override.yml          # Your customizations (git-ignored)
-├── docker-compose.override.template.yml # Minimal - copy to use
-├── docker-compose.override.example.yml  # Reference - shows all options
-├── .envrc                               # Container-specific envrc
-└── .envrc.template                      # Template for container envrc
+your-project/
+├── .devcontainer/
+│   ├── devcontainer.json
+│   ├── docker-compose.yml
+│   ├── docker-compose.override.yml          # Your customizations (git-ignored)
+│   ├── docker-compose.override.template.yml # Minimal starting point
+│   ├── docker-compose.override.example.yml  # Shows all options
+│   ├── .envrc                               # Container-specific (git-ignored)
+│   └── .envrc.template                      # Starting point
+├── .envrc                                   # Host-specific (git-ignored)
+└── flake.nix
 ```
 
-### How It Works
+## Key Concept
 
-1. `devcontainer.json` loads both compose files:
-   ```json
-   "dockerComposeFile": [
-     "docker-compose.yml",
-     "docker-compose.override.yml"
-   ]
-   ```
+`.envrc` files are **not committed** - each user customizes their own setup:
 
-2. The override file customizes behavior without modifying the base config
+- **Root `.envrc`** - Used on host
+- **`.devcontainer/.envrc`** - Used in container (if mounted)
 
-3. Example files show override patterns
+This lets you:
+- Use nix on host only, container only, or both
+- Inject secrets differently on host vs container
+- Use different devShells in each environment
 
-### Creating Your Override
+## Override Pattern
 
-Two approaches:
+`devcontainer.json` loads both compose files:
 
-**Quick start** - copy the template:
+```json
+"dockerComposeFile": [
+  "docker-compose.yml",
+  "docker-compose.override.yml"
+]
+```
+
+The override customizes behavior without modifying base config.
+
+### Quick Start
+
 ```bash
 cp .devcontainer/docker-compose.override.template.yml .devcontainer/docker-compose.override.yml
+cp .devcontainer/.envrc.template .devcontainer/.envrc
 ```
 
-**Custom setup** - use the example as reference:
-```bash
-cp .devcontainer/docker-compose.override.example.yml .devcontainer/docker-compose.override.yml
-# Then edit to add/remove options
-```
+### Full Customization
 
-The example shows additional options like mounting a container-specific `.envrc`:
+The example shows all options:
 
 ```yaml
-# .devcontainer/docker-compose.override.yml
+# docker-compose.override.example.yml
 services:
-  nix-devx:
-    # Option 1: Load environment from .env file
+  your-service:
     env_file:
       - path: ../.env
         required: false
-
-    # Option 2: Mount container-specific .envrc
     volumes:
       - ./.envrc:/workspaces/.envrc:ro
 ```
 
-**Important**: The volume mount replaces `/workspaces/.envrc` with `.devcontainer/.envrc` inside the container. If you enable this, edits to root `.envrc` won't affect the container.
+**Warning:** The volume mount replaces `/workspaces/.envrc` with `.devcontainer/.envrc` inside the container.
 
-### Templates vs Examples
+## Example Setups
 
-| File | Type | Purpose |
-|------|------|---------|
-| `.envrc.template` | Template | Copy to `.envrc` - ready to use |
-| `docker-compose.override.template.yml` | Template | Minimal - copy and use |
-| `docker-compose.override.example.yml` | Example | Shows all options - reference |
-
-## The `.envrc` Pattern
-
-By default, the project's root `.envrc` is used in both host and container.
-
-### Option 1: Same `.envrc` everywhere
-
-Do nothing. Both host and container use the root `.envrc`.
-
-### Option 2: Different `.envrc` for container
-
-Create `.devcontainer/.envrc` with container-specific config:
-
-```bash
-# .devcontainer/.envrc
-use flake .#container
-```
-
-Then add to your `docker-compose.override.yml`:
-
-```yaml
-services:
-  nix-devx:
-    volumes:
-      - ./.envrc:/workspaces/.envrc:ro
-```
-
-This mounts `.devcontainer/.envrc` over `/workspaces/.envrc` inside the container.
-
-### Typical Setup
+### Host: secrets only, Container: nix
 
 **Root `.envrc`** (host):
 ```bash
-# Empty or just secret injection - no nix on host
+# Just inject secrets, no nix
 export ANTHROPIC_AUTH_TOKEN=$(sops -d ...)
 ```
 
@@ -126,25 +82,37 @@ export ANTHROPIC_AUTH_TOKEN=$(sops -d ...)
 use flake .#container
 ```
 
-## The Container Shell
+### Same `.envrc` everywhere
 
-nix-devx provides `devShells.claude-unrestricted` that skips Claude's permission checks. Use it in trusted environments like containers.
+Don't create `.devcontainer/.envrc`. Both use root `.envrc`:
 
-In your project's `flake.nix`, define a container-specific shell:
+```bash
+use flake .
+```
+
+### Full nix on host too
+
+```bash
+# Root .envrc
+use flake .
+```
+
+## Unrestricted Claude in Container
+
+Define a container shell in your `flake.nix`:
 
 ```nix
 perSystem = { config, pkgs, ... }: {
-  languages.go.enable = true;
   ai.claude.enable = true;
 
-  # Host shell - with permission checks
+  # Host - normal permissions
   devShells.default = pkgs.mkShellNoCC {
-    inputsFrom = [ config.devShells.go config.devShells.claude ];
+    inputsFrom = [ config.devShells.claude ];
   };
 
-  # Container shell - unrestricted for trusted environment
+  # Container - unrestricted
   devShells.container = pkgs.mkShellNoCC {
-    inputsFrom = [ config.devShells.go config.devShells.claude-unrestricted ];
+    inputsFrom = [ config.devShells.claude-unrestricted ];
   };
 };
 ```
@@ -154,28 +122,9 @@ Then in `.devcontainer/.envrc`:
 use flake .#container
 ```
 
-You can name it anything - `container`, `devcontainer`, `unrestricted` - it's your project's shell.
+## Template vs Example
 
-## Environment Variables
-
-Pass variables through `docker-compose.yml`:
-
-```yaml
-services:
-  nix-devx:
-    environment:
-      - ANTHROPIC_AUTH_TOKEN=${ANTHROPIC_AUTH_TOKEN}
-      - ANTHROPIC_MODEL=${ANTHROPIC_MODEL:-claude-sonnet-4-20250514}
-```
-
-Set them in your shell before starting the container, or use a `.env` file loaded via override.
-
-## This Repo's Setup
-
-This repository (nix-devx itself) demonstrates the pattern:
-
-- **Host**: Root `.envrc` is minimal (no nix)
-- **Container**: Uses `.#container` shell (defined in this repo's `flake.nix`)
-- **Override**: Mounts `.devcontainer/.envrc` over root `.envrc`
-
-See `.devcontainer/` for the reference implementation. Note that `.#container` is this repo's own shell - you'll define your own in your project.
+| File | Purpose |
+|------|---------|
+| `.template` | Copy and use as-is |
+| `.example` | Reference to learn from |

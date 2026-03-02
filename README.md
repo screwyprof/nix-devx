@@ -2,13 +2,6 @@
 
 Modular development environments with flake-parts.
 
-## What's Included
-
-- **Language modules**: Go, Rust, Nix
-- **AI modules**: Claude Code, BMad Method
-- **Project templates**: Quick-start templates for new projects
-- **Dev container patterns**: Host vs dev container configuration
-
 ## Quick Start
 
 ### As a Flake Input
@@ -25,17 +18,13 @@ Modular development environments with flake-parts.
 
   outputs = inputs@{ flake-parts, nix-devx, ... }:
     flake-parts.lib.mkFlake { inherit inputs; } {
-      imports = [
-        nix-devx.flakeModules.languages-go
-        nix-devx.flakeModules.ai-claude
-      ];
+      imports = [ nix-devx.flakeModules.languages-go ];
 
       perSystem = { config, pkgs, ... }: {
         languages.go.enable = true;
-        ai.claude.enable = true;
 
         devShells.default = pkgs.mkShellNoCC {
-          inputsFrom = [ config.devShells.go config.devShells.claude ];
+          inputsFrom = [ config.devShells.go ];
         };
       };
     };
@@ -45,17 +34,12 @@ Modular development environments with flake-parts.
 ### From a Template
 
 ```bash
-# Create a new Go project
 nix flake init -t github:screwyprof/nix-devx#go
-
-# Create a new Rust project
 nix flake init -t github:screwyprof/nix-devx#rust
-
-# Create a Claude Code project
 nix flake init -t github:screwyprof/nix-devx#claude
 ```
 
-## Available Modules
+## Modules
 
 | Module | Description |
 |--------|-------------|
@@ -67,32 +51,18 @@ nix flake init -t github:screwyprof/nix-devx#claude
 
 ## Documentation
 
-- **[Modules Reference](docs/modules.md)** - All modules, options, and usage
-- **[Templates](docs/templates.md)** - Available templates and customization
+- **[Modules Reference](docs/modules.md)** - All modules and options
+- **[Templates](docs/templates.md)** - Available templates
 - **[Dev Container Patterns](docs/devcontainer.md)** - Host vs container setup
-
-## Developing This Repo
-
-This repo uses its own modules for development.
-
-### Dev Container
-
-```bash
-# Open in VS Code and run:
-Dev Containers: Reopen in Container
-```
-
-### Host
-
-```bash
-nix develop
-# or with direnv
-direnv allow
-```
 
 ## Philosophy
 
-1. **Modular**: Use any combination of modules
-2. **Lazy**: Disabled modules don't evaluate dependencies
-3. **Independent**: Modules don't depend on each other
-4. **Stackable**: Combine devShells via `inputsFrom`
+**Versatile by design.** Pick your setup at every level:
+
+- **Host or container?** Your choice
+- **direnv or nix develop?** Your choice
+- **Which modules?** Mix and match any combination
+- **How to stack?** Combine devShells via `inputsFrom`
+
+Dev containers can be customized via docker-compose overrides. direnv can be customized per-user via `.envrc` (not committed). This repo uses nix on host for secret injection only, and activates the flake inside the container - but you can do it differently.
+
