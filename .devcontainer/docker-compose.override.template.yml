@@ -3,3 +3,5 @@ services:
     env_file:
       - path: ../.env
         required: false
+    volumes:
+      - ./.envrc:/workspaces/.envrc:ro
