@@ -45,8 +45,10 @@ Use a development shell in any project without creating a flake:
 
 ```bash
 cd any-project
-nix develop "github:screwyprof/nix-devx?dir=shells/go"
+nix develop "github:screwyprof/nix-devx?dir=shells/go" --no-write-lock-file
 ```
+
+> **Note:** Use `--no-write-lock-file` to prevent Nix from trying to write a lock file for remote flakes.
 
 ## Modules
 
