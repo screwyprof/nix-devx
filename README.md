@@ -35,9 +35,17 @@ Modular development environments with flake-parts.
 
 ```bash
 nix flake init -t github:screwyprof/nix-devx#go
-nix flake init -t github:screwyprof/nix-devx#nix
 nix flake init -t github:screwyprof/nix-devx#rust
 nix flake init -t github:screwyprof/nix-devx#claude
+```
+
+### Ad-hoc Dev Shells
+
+Use a development shell in any project without creating a flake:
+
+```bash
+cd any-project
+nix develop "github:screwyprof/nix-devx?dir=shells/go"
 ```
 
 ## Modules
@@ -54,6 +62,7 @@ nix flake init -t github:screwyprof/nix-devx#claude
 
 - **[Modules Reference](docs/modules.md)** - All modules and options
 - **[Templates](docs/templates.md)** - Available templates
+- **[Dev Shells](docs/shells.md)** - Ad-hoc dev environments
 - **[Dev Container Patterns](docs/devcontainer.md)** - Host vs container setup
 
 ## Philosophy

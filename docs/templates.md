@@ -1,8 +1,11 @@
 # Templates
 
-nix-devx provides project templates for quick setup. Use them with `nix flake init`:
+nix-devx provides project templates for quick setup.
 
 ```bash
+# List all available templates
+nix flake show github:screwyprof/nix-devx
+
 # Initialize a new project from a template
 nix flake init -t github:screwyprof/nix-devx#<template-name>
 ```
