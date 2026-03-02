@@ -1,8 +1,5 @@
 services:
-  gopher-dev:
+  nix-devx:
     env_file:
-      - path: ../.env  # Your .env file (git-ignored)
-        required: false # Makes the file optional. Default value is 'true'
-    volumes:
-      # container specific .envrc
-      - ./.envrc:/workspaces/.envrc:ro
+      - path: ../.env
+        required: false

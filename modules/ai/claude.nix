@@ -8,6 +8,54 @@ let
     ;
 
   boolToBin = b: if b then "1" else "0";
+
+  # Shared shellHook for Claude shells
+  mkClaudeShellHook = cfg: ''
+    PROJECT_ROOT=''${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}
+    PROJECT_HASH=''${PROJECT_HASH:-$(printf '%s\n' "$PROJECT_ROOT" | shasum -a 256 | cut -c1-8)}
+
+    export CLAUDE_CONFIG_DIR=''${CLAUDE_CONFIG_DIR:-${
+      if cfg.configDir != null then
+        cfg.configDir
+      else
+        "\${XDG_STATE_HOME:-$HOME/.local/state}/claude/$PROJECT_HASH"
+    }}
+    mkdir -p "$CLAUDE_CONFIG_DIR"
+
+    if [ -z "''${ANTHROPIC_AUTH_TOKEN:-}" ]; then
+      echo "⚠️  Warning: ANTHROPIC_AUTH_TOKEN is not set"
+    fi
+
+    export ANTHROPIC_BASE_URL=''${ANTHROPIC_BASE_URL:-${cfg.baseUrl}}
+    export ANTHROPIC_MODEL=''${ANTHROPIC_MODEL:-${cfg.models.default}}
+    export ANTHROPIC_DEFAULT_OPUS_MODEL=''${ANTHROPIC_DEFAULT_OPUS_MODEL:-${cfg.models.opus}}
+    export ANTHROPIC_DEFAULT_SONNET_MODEL=''${ANTHROPIC_DEFAULT_SONNET_MODEL:-${cfg.models.sonnet}}
+    export ANTHROPIC_DEFAULT_HAIKU_MODEL=''${ANTHROPIC_DEFAULT_HAIKU_MODEL:-${cfg.models.haiku}}
+
+    export DISABLE_TELEMETRY=''${DISABLE_TELEMETRY:-${boolToBin cfg.telemetry.disable}}
+    export DISABLE_ERROR_REPORTING=''${DISABLE_ERROR_REPORTING:-${boolToBin cfg.telemetry.disableErrorReporting}}
+    export DISABLE_AUTOUPDATER=''${DISABLE_AUTOUPDATER:-${boolToBin cfg.telemetry.disableAutoUpdater}}
+    export DISABLE_INSTALLATION_CHECKS=''${DISABLE_INSTALLATION_CHECKS:-${boolToBin cfg.telemetry.disableInstallationChecks}}
+    export IS_DEMO=''${IS_DEMO:-${boolToBin cfg.demo}}
+    export CLAUDE_CODE_ENABLE_TELEMETRY=''${CLAUDE_CODE_ENABLE_TELEMETRY:-${boolToBin cfg.telemetry.enableClaudeCodeTelemetry}}
+    export CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY=''${CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY:-${boolToBin cfg.telemetry.disableFeedbackSurvey}}
+    export CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=''${CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC:-${boolToBin cfg.telemetry.disableNonessentialTraffic}}
+
+    export CLAUDE_CODE_SKIP_AUTH_LOGIN=''${CLAUDE_CODE_SKIP_AUTH_LOGIN:-${boolToBin cfg.ide.skipAuthLogin}}
+    export CLAUDE_CODE_IDE_SKIP_AUTO_INSTALL=''${CLAUDE_CODE_IDE_SKIP_AUTO_INSTALL:-${boolToBin cfg.ide.skipAutoInstall}}
+
+    export CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR=''${CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR:-${boolToBin cfg.shell.maintainProjectWorkingDir}}
+    export CLAUDE_CODE_SHELL=''${CLAUDE_CODE_SHELL:-${cfg.shell.program}}
+
+    export CLAUDE_CODE_TMPDIR=''${CLAUDE_CODE_TMPDIR:-${cfg.tmpDir}}
+
+    echo "🤖 Claude Code Development Environment"
+    echo "======================================"
+    echo "Claude version: $(claude -v 2>/dev/null || echo unknown)"
+    echo "PROJECT_ROOT: $PROJECT_ROOT"
+    echo "CLAUDE_CONFIG_DIR: $CLAUDE_CONFIG_DIR"
+    echo ""
+  '';
 in
 {
   options.perSystem = flake-parts-lib.mkPerSystemOption (
@@ -173,6 +221,7 @@ in
       };
 
       config = mkIf cfg.enable {
+        # Main wrapper respects the dangerouslySkipPermissions config
         packages.claude-wrapper = pkgs.writeShellApplication {
           name = "claude";
           runtimeInputs = [ pkgs.claude-code ];
@@ -188,58 +237,31 @@ in
               '';
         };
 
+        # Main devShell - respects dangerouslySkipPermissions config
         devShells.claude = pkgs.mkShellNoCC {
           nativeBuildInputs = with pkgs; [
             nodejs
             config.packages.claude-wrapper
           ];
 
-          shellHook = ''
-            PROJECT_ROOT=''${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}
-            PROJECT_HASH=''${PROJECT_HASH:-$(printf '%s\n' "$PROJECT_ROOT" | shasum -a 256 | cut -c1-8)}
+          shellHook = mkClaudeShellHook cfg;
+        };
 
-            export CLAUDE_CONFIG_DIR=''${CLAUDE_CONFIG_DIR:-${
-              if cfg.configDir != null then
-                cfg.configDir
-              else
-                "\${XDG_STATE_HOME:-$HOME/.local/state}/claude/$PROJECT_HASH"
-            }}
-            mkdir -p "$CLAUDE_CONFIG_DIR"
+        # Unrestricted devShell - always skips permissions
+        # Use this for trusted environments like devcontainers
+        devShells.claude-unrestricted = pkgs.mkShellNoCC {
+          nativeBuildInputs = with pkgs; [
+            nodejs
+            (pkgs.writeShellApplication {
+              name = "claude";
+              runtimeInputs = [ pkgs.claude-code ];
+              text = ''
+                exec ${pkgs.claude-code}/bin/claude --dangerously-skip-permissions "$@"
+              '';
+            })
+          ];
 
-            if [ -z "''${ANTHROPIC_AUTH_TOKEN:-}" ]; then
-              echo "⚠️  Warning: ANTHROPIC_AUTH_TOKEN is not set"
-            fi
-
-            export ANTHROPIC_BASE_URL=''${ANTHROPIC_BASE_URL:-${cfg.baseUrl}}
-            export ANTHROPIC_MODEL=''${ANTHROPIC_MODEL:-${cfg.models.default}}
-            export ANTHROPIC_DEFAULT_OPUS_MODEL=''${ANTHROPIC_DEFAULT_OPUS_MODEL:-${cfg.models.opus}}
-            export ANTHROPIC_DEFAULT_SONNET_MODEL=''${ANTHROPIC_DEFAULT_SONNET_MODEL:-${cfg.models.sonnet}}
-            export ANTHROPIC_DEFAULT_HAIKU_MODEL=''${ANTHROPIC_DEFAULT_HAIKU_MODEL:-${cfg.models.haiku}}
-
-            export DISABLE_TELEMETRY=''${DISABLE_TELEMETRY:-${boolToBin cfg.telemetry.disable}}
-            export DISABLE_ERROR_REPORTING=''${DISABLE_ERROR_REPORTING:-${boolToBin cfg.telemetry.disableErrorReporting}}
-            export DISABLE_AUTOUPDATER=''${DISABLE_AUTOUPDATER:-${boolToBin cfg.telemetry.disableAutoUpdater}}
-            export DISABLE_INSTALLATION_CHECKS=''${DISABLE_INSTALLATION_CHECKS:-${boolToBin cfg.telemetry.disableInstallationChecks}}
-            export IS_DEMO=''${IS_DEMO:-${boolToBin cfg.demo}}
-            export CLAUDE_CODE_ENABLE_TELEMETRY=''${CLAUDE_CODE_ENABLE_TELEMETRY:-${boolToBin cfg.telemetry.enableClaudeCodeTelemetry}}
-            export CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY=''${CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY:-${boolToBin cfg.telemetry.disableFeedbackSurvey}}
-            export CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=''${CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC:-${boolToBin cfg.telemetry.disableNonessentialTraffic}}
-
-            export CLAUDE_CODE_SKIP_AUTH_LOGIN=''${CLAUDE_CODE_SKIP_AUTH_LOGIN:-${boolToBin cfg.ide.skipAuthLogin}}
-            export CLAUDE_CODE_IDE_SKIP_AUTO_INSTALL=''${CLAUDE_CODE_IDE_SKIP_AUTO_INSTALL:-${boolToBin cfg.ide.skipAutoInstall}}
-
-            export CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR=''${CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR:-${boolToBin cfg.shell.maintainProjectWorkingDir}}
-            export CLAUDE_CODE_SHELL=''${CLAUDE_CODE_SHELL:-${cfg.shell.program}}
-
-            export CLAUDE_CODE_TMPDIR=''${CLAUDE_CODE_TMPDIR:-${cfg.tmpDir}}
-
-            echo "🤖 Claude Code Development Environment"
-            echo "======================================"
-            echo "Claude version: $(claude -v 2>/dev/null || echo unknown)"
-            echo "PROJECT_ROOT: $PROJECT_ROOT"
-            echo "CLAUDE_CONFIG_DIR: $CLAUDE_CONFIG_DIR"
-            echo ""
-          '';
+          shellHook = mkClaudeShellHook cfg;
         };
       };
     }

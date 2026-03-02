@@ -1,95 +1,98 @@
-# Flexible Development Environment
+# nix-devx
 
-An example project demonstrating a configurable dev environment. This setup supports multiple workflows without forcing any particular tooling choice.
+Modular development environments with flake-parts.
 
-## My Use Case
+## What's Included
 
-I run Claude Code and VS Code extensions inside a dev container (which itself runs in a VM) for isolation. On my host, VS Code is managed by Nix with minimal trusted extensions with all settings in read only mode. Nix also manages my secrets and dev tooling.
-
-## Philosophy
-
-This is an **example** of how to set up a flexible dev environment. The key idea is providing choice:
-
-- Host or container? Your choice
-- Direnv or manual? Your choice
-- `.envrc` or `.env`? Your choice
+- **Language modules**: Go, Rust, Nix
+- **AI modules**: Claude Code, BMad Method
+- **Project templates**: Quick-start templates for new projects
+- **Dev container patterns**: Host vs dev container configuration
 
 ## Quick Start
 
+### As a Flake Input
+
+```nix
+{
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    flake-parts.url = "github:hercules-ci/flake-parts";
+
+    nix-devx.url = "github:screwyprof/nix-devx";
+    nix-devx.inputs.nixpkgs.follows = "nixpkgs";
+  };
+
+  outputs = inputs@{ flake-parts, nix-devx, ... }:
+    flake-parts.lib.mkFlake { inherit inputs; } {
+      imports = [
+        nix-devx.flakeModules.languages-go
+        nix-devx.flakeModules.ai-claude
+      ];
+
+      perSystem = { config, pkgs, ... }: {
+        languages.go.enable = true;
+        ai.claude.enable = true;
+
+        devShells.default = pkgs.mkShellNoCC {
+          inputsFrom = [ config.devShells.go config.devShells.claude ];
+        };
+      };
+    };
+}
+```
+
+### From a Template
+
+```bash
+# Create a new Go project
+nix flake init -t github:screwyprof/nix-devx#go
+
+# Create a new Rust project
+nix flake init -t github:screwyprof/nix-devx#rust
+
+# Create a Claude Code project
+nix flake init -t github:screwyprof/nix-devx#claude
+```
+
+## Available Modules
+
+| Module | Description |
+|--------|-------------|
+| `languages-go` | Go toolchain with linting |
+| `languages-rust` | Rust toolchain with cargo extensions |
+| `languages-nix` | Nix formatting and linting |
+| `ai-claude` | Claude Code integration |
+| `ai-bmad-method` | BMad Method framework |
+
+## Documentation
+
+- **[Modules Reference](docs/modules.md)** - All modules, options, and usage
+- **[Templates](docs/templates.md)** - Available templates and customization
+- **[Dev Container Patterns](docs/devcontainer.md)** - Host vs container setup
+
+## Developing This Repo
+
+This repo uses its own modules for development.
+
 ### Dev Container
 
-1. Set `ANTHROPIC_AUTH_TOKEN` in your environment
-2. Open in VS Code and run `Dev Containers: Reopen in Container`
+```bash
+# Open in VS Code and run:
+Dev Containers: Reopen in Container
+```
 
-That's it! Nix and direnv inside the container handle everything.
-
-[VS Code Dev Container documentation](https://code.claude.com/docs/en/devcontainer) | [Claude Code Dev Container](https://code.claude.com/docs/en/devcontainer)
-
-### Optional: Inject Secrets via Direnv
-
-If you use direnv, you can create `.envrc` to inject secrets using your password manager or secrets manager (sops, 1password, etc.). See `.envrc.template` for examples.
-
-### Optional: Inject Secrets via `.env` File
-
-Alternatively, create a `.env` file in the project root (git-ignored). The docker-compose override will auto-load it:
+### Host
 
 ```bash
-# .env
-ANTHROPIC_AUTH_TOKEN=sk-ant-...
+nix develop
+# or with direnv
+direnv allow
 ```
 
-> **Note**: For better security practices, consider using a password/secret manager to retrieve secrets (see direnv examples above).
+## Philosophy
 
-### Optional: Shift+Enter in Terminal (macOS)
-
-On macOS, if you want `Shift+Enter` to create a newline in terminals (for multi-line input), add this to your Mac's VSCode keybindings (`Cmd+Shift+P` → "Preferences: Open Keyboard Shortcuts (JSON)"):
-
-```json
-[
-  {
-    "key": "shift+enter",
-    "command": "workbench.action.terminal.sendSequence",
-    "args": { "text": "\\u001B\\u000A" },
-    "when": "terminalFocus"
-  }
-]
-```
-
-### Optional: Use Nix on Host
-
-If you have Nix, you know what to do: `nix develop` or add `use flake .` to your `.envrc`.
-
-## Configuration
-
-Templates available for customization:
-
-| Template | Creates | Purpose |
-|----------|---------|---------|
-| `.envrc.template` | `.envrc` | Example for host secret injection (customize as needed) |
-| `.devcontainer/.envrc.template` | `.devcontainer/.envrc` | Container-specific, auto-copied on first open |
-| `.devcontainer/docker-compose.override.template.yml` | `.devcontainer/docker-compose.override.yml` | Container-specific, auto-copied on first open |
-
-### Host vs Container Separation
-
-You can have completely different behavior in each environment:
-
-**Host `.envrc`** - Secret injection only:
-```bash
-# No use flake . here - just inject secrets
-if has sops; then
-  export ANTHROPIC_AUTH_TOKEN=$(sops -d --extract '["service"]["api_key"]' ~/path/to/secrets.yaml)
-fi
-```
-
-**Container `.envrc`** - Has `use flake .`, no secrets:
-```bash
-use flake .
-```
-
-## Nix flake Claude Code Integration
-
-Includes MCP servers:
-- **context7** - Library documentation
-- **memory** - Knowledge graph
-- **sequential-thinking** - Structured problem solving
-- **serena** - Semantic code navigation
+1. **Modular**: Use any combination of modules
+2. **Lazy**: Disabled modules don't evaluate dependencies
+3. **Independent**: Modules don't depend on each other
+4. **Stackable**: Combine devShells via `inputsFrom`

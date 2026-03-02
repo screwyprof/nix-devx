@@ -1,5 +1,5 @@
 {
-  description = "Example Go project";
+  description = "Rust project with nix-devx";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
@@ -7,7 +7,7 @@
     git-hooks.url = "github:cachix/git-hooks.nix";
     nix-filter.url = "github:numtide/nix-filter";
 
-    nix-devx.url = "path:../..";
+    nix-devx.url = "github:screwyprof/nix-devx";
     nix-devx.inputs.nixpkgs.follows = "nixpkgs";
   };
 
@@ -18,7 +18,7 @@
       {
         imports = [
           inputs.git-hooks.flakeModule
-          nix-devx.flakeModules.languages-go
+          nix-devx.flakeModules.languages-rust
         ];
 
         systems = lib.systems.flakeExposed;
@@ -26,38 +26,38 @@
         perSystem =
           { config, pkgs, ... }:
           {
-            languages.go.enable = true;
-            languages.go.hooks = true;
+            languages.rust.enable = true;
+            languages.rust.hooks = true;
 
             pre-commit.settings.src = inputs.nix-filter.lib.filter {
               root = ./.;
               include = [
-                (inputs.nix-filter.lib.matchExt "go")
-                (inputs.nix-filter.lib.matchExt "mod")
-                (inputs.nix-filter.lib.matchExt "sum")
+                (inputs.nix-filter.lib.matchExt "rs")
+                (inputs.nix-filter.lib.matchExt "toml")
                 "flake.lock"
               ];
               exclude = [
                 ".direnv"
                 ".git"
                 "result"
+                "target"
               ];
             };
 
             devShells.default = pkgs.mkShellNoCC {
               inputsFrom = [
-                config.devShells.go
+                config.devShells.rust
               ];
 
               shellHook = ''
-                echo "Go Example Project"
-                echo "=================="
+                echo "Rust Project"
+                echo "============"
                 echo ""
                 echo "Available commands:"
-                echo "  go run .           - Run the project"
-                echo "  go test ./...      - Run tests"
-                echo "  gofumpt -l .       - Check formatting"
-                echo "  golangci-lint run  - Run linter"
+                echo "  cargo run          - Run the project"
+                echo "  cargo test         - Run tests"
+                echo "  cargo clippy       - Run linter"
+                echo "  cargo fmt          - Format code"
                 echo ""
               '';
             };

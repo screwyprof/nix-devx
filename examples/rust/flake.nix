@@ -7,18 +7,18 @@
     git-hooks.url = "github:cachix/git-hooks.nix";
     nix-filter.url = "github:numtide/nix-filter";
 
-    gopher-env.url = "path:../..";
-    gopher-env.inputs.nixpkgs.follows = "nixpkgs";
+    nix-devx.url = "path:../..";
+    nix-devx.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs =
-    inputs@{ flake-parts, gopher-env, ... }:
+    inputs@{ flake-parts, nix-devx, ... }:
     flake-parts.lib.mkFlake { inherit inputs; } (
       { lib, ... }:
       {
         imports = [
           inputs.git-hooks.flakeModule
-          gopher-env.flakeModules.languages-rust
+          nix-devx.flakeModules.languages-rust
         ];
 
         systems = lib.systems.flakeExposed;
@@ -50,8 +50,8 @@
               ];
 
               shellHook = ''
-                echo "🦀 Rust Example Project"
-                echo "======================="
+                echo "Rust Example Project"
+                echo "===================="
                 echo ""
                 echo "Available commands:"
                 echo "  cargo run          - Run the project"

@@ -1,5 +1,5 @@
 {
-  description = "Example Go project";
+  description = "Nix project with nix-devx";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
@@ -7,7 +7,7 @@
     git-hooks.url = "github:cachix/git-hooks.nix";
     nix-filter.url = "github:numtide/nix-filter";
 
-    nix-devx.url = "path:../..";
+    nix-devx.url = "github:screwyprof/nix-devx";
     nix-devx.inputs.nixpkgs.follows = "nixpkgs";
   };
 
@@ -18,7 +18,7 @@
       {
         imports = [
           inputs.git-hooks.flakeModule
-          nix-devx.flakeModules.languages-go
+          nix-devx.flakeModules.languages-nix
         ];
 
         systems = lib.systems.flakeExposed;
@@ -26,15 +26,13 @@
         perSystem =
           { config, pkgs, ... }:
           {
-            languages.go.enable = true;
-            languages.go.hooks = true;
+            languages.nix.enable = true;
+            languages.nix.hooks = true;
 
             pre-commit.settings.src = inputs.nix-filter.lib.filter {
               root = ./.;
               include = [
-                (inputs.nix-filter.lib.matchExt "go")
-                (inputs.nix-filter.lib.matchExt "mod")
-                (inputs.nix-filter.lib.matchExt "sum")
+                (inputs.nix-filter.lib.matchExt "nix")
                 "flake.lock"
               ];
               exclude = [
@@ -46,18 +44,16 @@
 
             devShells.default = pkgs.mkShellNoCC {
               inputsFrom = [
-                config.devShells.go
+                config.devShells.nix
               ];
 
               shellHook = ''
-                echo "Go Example Project"
-                echo "=================="
+                echo "Nix Project"
+                echo "==========="
                 echo ""
                 echo "Available commands:"
-                echo "  go run .           - Run the project"
-                echo "  go test ./...      - Run tests"
-                echo "  gofumpt -l .       - Check formatting"
-                echo "  golangci-lint run  - Run linter"
+                echo "  nix fmt            - Format Nix files"
+                echo "  nix flake check    - Run all checks (formatting, linting)"
                 echo ""
               '';
             };

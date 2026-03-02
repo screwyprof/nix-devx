@@ -5,17 +5,17 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     flake-parts.url = "github:hercules-ci/flake-parts";
 
-    gopher-env.url = "path:../..";
-    gopher-env.inputs.nixpkgs.follows = "nixpkgs";
+    nix-devx.url = "path:../..";
+    nix-devx.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs =
-    inputs@{ flake-parts, gopher-env, ... }:
+    inputs@{ flake-parts, nix-devx, ... }:
     flake-parts.lib.mkFlake { inherit inputs; } (
       { lib, ... }:
       {
         imports = [
-          gopher-env.flakeModules.ai-bmad-method
+          nix-devx.flakeModules.ai-bmad-method
         ];
 
         systems = lib.systems.flakeExposed;

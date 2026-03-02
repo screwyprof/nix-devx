@@ -1,5 +1,5 @@
 {
-  description = "Example Go project";
+  description = "Go project with nix-devx";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
@@ -7,7 +7,7 @@
     git-hooks.url = "github:cachix/git-hooks.nix";
     nix-filter.url = "github:numtide/nix-filter";
 
-    nix-devx.url = "path:../..";
+    nix-devx.url = "github:screwyprof/nix-devx";
     nix-devx.inputs.nixpkgs.follows = "nixpkgs";
   };
 
@@ -50,8 +50,8 @@
               ];
 
               shellHook = ''
-                echo "Go Example Project"
-                echo "=================="
+                echo "Go Project"
+                echo "=========="
                 echo ""
                 echo "Available commands:"
                 echo "  go run .           - Run the project"

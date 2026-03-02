@@ -1,5 +1,5 @@
 {
-  description = "Gopher's Environment Hub";
+  description = "nix-devx - Modular development environments with flake-parts";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";

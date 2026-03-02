@@ -1,15 +1,17 @@
 {
-  description = "Example Claude Code project";
+  description = "Claude Code project with nix-devx";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     flake-parts.url = "github:hercules-ci/flake-parts";
+
     mcp-servers-nix = {
       url = "github:natsukium/mcp-servers-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
     nix-devx = {
-      url = "path:../..";
+      url = "github:screwyprof/nix-devx";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
@@ -39,6 +41,7 @@
             ...
           }:
           {
+            # Claude Code requires unfree package
             _module.args.pkgs = import nixpkgs {
               inherit system;
               config.allowUnfree = true;
@@ -46,16 +49,12 @@
 
             ai.claude = {
               enable = true;
-              dangerouslySkipPermissions = true;
-              baseUrl = "https://api.z.ai";
-              models = {
-                default = "glm-5";
-                opus = "glm-4.7";
-                sonnet = "glm-4.7";
-                haiku = "glm-4.5-air";
-              };
+              # Set to true only in trusted environments (e.g., devcontainers)
+              # Or use devShells.claude-unrestricted instead
+              dangerouslySkipPermissions = false;
             };
 
+            # Optional: Enable MCP servers
             mcp-servers = {
               programs = {
                 memory.enable = true;
@@ -64,11 +63,18 @@
               flavors.claude-code.enable = true;
             };
 
+            # Default shell - respects dangerouslySkipPermissions setting
             devShells.default = pkgs.mkShellNoCC {
               inputsFrom = [
                 config.devShells.claude
               ];
             };
+
+            # Unrestricted shell - always skips permissions
+            # Use this for trusted environments like devcontainers
+            # devShells.container = pkgs.mkShellNoCC {
+            #   inputsFrom = [ config.devShells.claude-unrestricted ];
+            # };
           };
       }
     );
