@@ -1,9 +1,22 @@
-{ inputs, ... }:
+{
+  inputs,
+  config,
+  lib,
+  self,
+  ...
+}:
 {
   imports = [
+    # nix-devx modules (imported by path)
+    ../modules/languages/nix.nix
+    ../modules/ai/claude.nix
+
+    # Dev-only external modules
     inputs.git-hooks.flakeModule
     inputs.mcp-servers-nix.flakeModule
   ];
+
+  systems = lib.systems.flakeExposed;
 
   perSystem =
     {
@@ -13,6 +26,9 @@
       ...
     }:
     {
+      # Project tests
+      checks = import ../tests { inherit pkgs self; };
+
       # Enable Nix language for this repository
       languages.nix.enable = true;
 
@@ -21,7 +37,7 @@
 
       # Configure nix-filter for this project
       pre-commit.settings.src = inputs.nix-filter.lib.filter {
-        root = ./.;
+        root = ./..;
         include = [
           (inputs.nix-filter.lib.matchExt "nix")
           "flake.lock"
@@ -30,7 +46,6 @@
           ".direnv"
           ".git"
           "result"
-          "repos"
         ];
       };
 
@@ -57,11 +72,13 @@
         inputsFrom = [
           config.devShells.nix
           config.devShells.claude
+          config.mcp-servers.devShell
+          config.pre-commit.devShell
         ];
 
+        #nativeBuildInputs = [ pkgs.hci ];
+
         shellHook = ''
-          rm -r .pre-commit-config.yaml
-          ${config.pre-commit.shellHook}
           echo "nix-devx"
           echo "========"
           echo "Modular development environments with flake-parts"
@@ -80,10 +97,13 @@
         inputsFrom = [
           config.devShells.nix
           config.devShells.claude-unrestricted
+          config.mcp-servers.devShell
+          config.pre-commit.devShell
         ];
 
+        #nativeBuildInputs = [ pkgs.hci ];
+
         shellHook = ''
-          ${config.pre-commit.shellHook}
           echo "nix-devx (container)"
           echo "===================="
           echo "Modular development environments with flake-parts"
@@ -93,4 +113,7 @@
         '';
       };
     };
+
+  flake.config.config = config;
+  flake.options.mySystem = lib.mkOption { default = config.allSystems.${builtins.currentSystem}; };
 }

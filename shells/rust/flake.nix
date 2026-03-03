@@ -3,10 +3,15 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-    flake-parts.url = "github:hercules-ci/flake-parts";
-    git-hooks.url = "github:cachix/git-hooks.nix";
-    nix-devx.url = "github:screwyprof/nix-devx";
-    nix-devx.inputs.nixpkgs.follows = "nixpkgs";
+    flake-parts = {
+      url = "github:hercules-ci/flake-parts";
+      inputs.nixpkgs-lib.follows = "nixpkgs";
+    };
+    nix-devx = {
+      url = "path:../..";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.flake-parts.follows = "flake-parts";
+    };
   };
 
   outputs =
@@ -14,10 +19,7 @@
     flake-parts.lib.mkFlake { inherit inputs; } (
       { lib, ... }:
       {
-        imports = [
-          inputs.git-hooks.flakeModule
-          nix-devx.flakeModules.languages-rust
-        ];
+        imports = [ nix-devx.flakeModules.languages-rust ];
 
         systems = lib.systems.flakeExposed;
 

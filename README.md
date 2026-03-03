@@ -67,6 +67,16 @@ nix develop "github:screwyprof/nix-devx?dir=shells/go" --no-write-lock-file
 - **[Dev Shells](docs/shells.md)** - Ad-hoc dev environments
 - **[Dev Container Patterns](docs/devcontainer.md)** - Host vs container setup
 
+## Developing nix-devx
+
+To work on nix-devx itself:
+
+```bash
+nix develop
+```
+
+This project uses the [partitions pattern](https://flake.parts/partitions) from flake-parts to separate development dependencies from the hub. The `dev/` directory contains extra inputs (git-hooks, mcp-servers-nix, nix-filter) that are only loaded when devShells or checks are accessed.
+
 ## Philosophy
 
 **Versatile by design.** Pick your setup at every level:
