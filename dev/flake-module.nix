@@ -26,9 +26,6 @@
       ...
     }:
     {
-      # Project tests
-      checks = import ../tests { inherit pkgs self; };
-
       # Enable Nix language for this repository
       languages.nix.enable = true;
 
@@ -76,7 +73,14 @@
           config.pre-commit.devShell
         ];
 
-        #nativeBuildInputs = [ pkgs.hci ];
+        nativeBuildInputs = [
+          (pkgs.bats.withLibraries (p: [
+            p.bats-support
+            p.bats-assert
+          ]))
+          pkgs.delta
+          pkgs.shellcheck
+        ];
 
         shellHook = ''
           echo "nix-devx"
@@ -101,7 +105,14 @@
           config.pre-commit.devShell
         ];
 
-        #nativeBuildInputs = [ pkgs.hci ];
+        nativeBuildInputs = [
+          (pkgs.bats.withLibraries (p: [
+            p.bats-support
+            p.bats-assert
+          ]))
+          pkgs.delta
+          pkgs.shellcheck
+        ];
 
         shellHook = ''
           echo "nix-devx (container)"

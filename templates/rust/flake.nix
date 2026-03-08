@@ -13,7 +13,7 @@
     };
     nix-filter.url = "github:numtide/nix-filter";
     nix-devx = {
-      url = "path:../..";
+      url = "github:screwyprof/nix-devx";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.flake-parts.follows = "flake-parts";
     };

@@ -2,6 +2,8 @@
 
 # Fix ownership of the home directory
 sudo chown -R vscode:vscode /home/vscode/
+git config --global core.pager "delta"
+git config --global interactive.diffFilter "delta --color-only"
 
 echo "Updating shell configurations..."
 

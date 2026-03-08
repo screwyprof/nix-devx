@@ -49,7 +49,7 @@ let
 
     export CLAUDE_CODE_TMPDIR=''${CLAUDE_CODE_TMPDIR:-${cfg.tmpDir}}
 
-    echo "🤖 Claude Code Development Environment"
+    echo "🤖 Claude Code Development Environment loaded"
     echo "======================================"
     echo "Claude version: $(claude -v 2>/dev/null || echo unknown)"
     echo "PROJECT_ROOT: $PROJECT_ROOT"

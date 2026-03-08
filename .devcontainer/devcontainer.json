@@ -58,7 +58,8 @@
         		"golang.go",
 				"usernamehw.errorlens",
  				"premparihar.gotestexplorer",
-				"ms-vscode.makefile-tools"
+				"ms-vscode.makefile-tools",
+				"jetmartin.bats"
       		],
       		"settings": {
         		"task.allowAutomaticTasks": "off",
