@@ -5,63 +5,185 @@ let
     mkIf
     mkOption
     types
+    concatStringsSep
+    getAttrFromPath
     ;
 
-  boolToBin = b: if b then "1" else "0";
+  # Environment variable mapping - co-located with options for easier maintenance
+  envVarMappings = [
+    {
+      envVar = "ANTHROPIC_BASE_URL";
+      path = [ "baseUrl" ];
+    }
+    {
+      envVar = "ANTHROPIC_MODEL";
+      path = [
+        "models"
+        "default"
+      ];
+    }
+    {
+      envVar = "ANTHROPIC_DEFAULT_OPUS_MODEL";
+      path = [
+        "models"
+        "opus"
+      ];
+    }
+    {
+      envVar = "ANTHROPIC_DEFAULT_SONNET_MODEL";
+      path = [
+        "models"
+        "sonnet"
+      ];
+    }
+    {
+      envVar = "ANTHROPIC_DEFAULT_HAIKU_MODEL";
+      path = [
+        "models"
+        "haiku"
+      ];
+    }
+    {
+      envVar = "DISABLE_TELEMETRY";
+      path = [
+        "telemetry"
+        "disable"
+      ];
+    }
+    {
+      envVar = "DISABLE_ERROR_REPORTING";
+      path = [
+        "telemetry"
+        "disableErrorReporting"
+      ];
+    }
+    {
+      envVar = "DISABLE_AUTOUPDATER";
+      path = [
+        "telemetry"
+        "disableAutoUpdater"
+      ];
+    }
+    {
+      envVar = "DISABLE_INSTALLATION_CHECKS";
+      path = [
+        "telemetry"
+        "disableInstallationChecks"
+      ];
+    }
+    {
+      envVar = "CLAUDE_CODE_ENABLE_TELEMETRY";
+      path = [
+        "telemetry"
+        "enableClaudeCodeTelemetry"
+      ];
+    }
+    {
+      envVar = "CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY";
+      path = [
+        "telemetry"
+        "disableFeedbackSurvey"
+      ];
+    }
+    {
+      envVar = "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC";
+      path = [
+        "telemetry"
+        "disableNonessentialTraffic"
+      ];
+    }
+    {
+      envVar = "CLAUDE_CODE_SKIP_AUTH_LOGIN";
+      path = [
+        "ide"
+        "skipAuthLogin"
+      ];
+    }
+    {
+      envVar = "CLAUDE_CODE_IDE_SKIP_AUTO_INSTALL";
+      path = [
+        "ide"
+        "skipAutoInstall"
+      ];
+    }
+    {
+      envVar = "CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR";
+      path = [
+        "shell"
+        "maintainProjectWorkingDir"
+      ];
+    }
+    {
+      envVar = "CLAUDE_CODE_SHELL";
+      path = [
+        "shell"
+        "program"
+      ];
+    }
+    {
+      envVar = "IS_DEMO";
+      path = [ "demo" ];
+    }
+    {
+      envVar = "CLAUDE_CODE_TMPDIR";
+      path = [ "tmpDir" ];
+    }
+    {
+      envVar = "CLAUDE_PROJECT_ISOLATION";
+      path = [ "enableProjectIsolation" ];
+    }
+    {
+      envVar = "CLAUDE_CONFIG_DIR";
+      path = [ "configDir" ];
+      runtimeDefault = "$(if [ \"\${CLAUDE_PROJECT_ISOLATION:-0}\" = \"1\" ]; then echo \"\${XDG_STATE_HOME:-$HOME/.local/state}/claude/$PROJECT_HASH\"; else echo \"$HOME/.claude\"; fi)";
+    }
+  ];
 
-  # Shared shellHook for Claude shells
-  mkClaudeShellHook = cfg: ''
-    PROJECT_ROOT=''${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}
-    PROJECT_HASH=''${PROJECT_HASH:-$(printf '%s\n' "$PROJECT_ROOT" | shasum -a 256 | cut -c1-8)}
-
-    export CLAUDE_CONFIG_DIR=''${CLAUDE_CONFIG_DIR:-${
-      if cfg.configDir != null then
-        cfg.configDir
-      else
-        "\${XDG_STATE_HOME:-$HOME/.local/state}/claude/$PROJECT_HASH"
-    }}
-    mkdir -p "$CLAUDE_CONFIG_DIR"
-
-    if [ -z "''${ANTHROPIC_AUTH_TOKEN:-}" ]; then
-      echo "⚠️  Warning: ANTHROPIC_AUTH_TOKEN is not set"
-    fi
-
-    export ANTHROPIC_BASE_URL=''${ANTHROPIC_BASE_URL:-${cfg.baseUrl}}
-    export ANTHROPIC_MODEL=''${ANTHROPIC_MODEL:-${cfg.models.default}}
-    export ANTHROPIC_DEFAULT_OPUS_MODEL=''${ANTHROPIC_DEFAULT_OPUS_MODEL:-${cfg.models.opus}}
-    export ANTHROPIC_DEFAULT_SONNET_MODEL=''${ANTHROPIC_DEFAULT_SONNET_MODEL:-${cfg.models.sonnet}}
-    export ANTHROPIC_DEFAULT_HAIKU_MODEL=''${ANTHROPIC_DEFAULT_HAIKU_MODEL:-${cfg.models.haiku}}
-
-    export DISABLE_TELEMETRY=''${DISABLE_TELEMETRY:-${boolToBin cfg.telemetry.disable}}
-    export DISABLE_ERROR_REPORTING=''${DISABLE_ERROR_REPORTING:-${boolToBin cfg.telemetry.disableErrorReporting}}
-    export DISABLE_AUTOUPDATER=''${DISABLE_AUTOUPDATER:-${boolToBin cfg.telemetry.disableAutoUpdater}}
-    export DISABLE_INSTALLATION_CHECKS=''${DISABLE_INSTALLATION_CHECKS:-${boolToBin cfg.telemetry.disableInstallationChecks}}
-    export IS_DEMO=''${IS_DEMO:-${boolToBin cfg.demo}}
-    export CLAUDE_CODE_ENABLE_TELEMETRY=''${CLAUDE_CODE_ENABLE_TELEMETRY:-${boolToBin cfg.telemetry.enableClaudeCodeTelemetry}}
-    export CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY=''${CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY:-${boolToBin cfg.telemetry.disableFeedbackSurvey}}
-    export CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=''${CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC:-${boolToBin cfg.telemetry.disableNonessentialTraffic}}
-
-    export CLAUDE_CODE_SKIP_AUTH_LOGIN=''${CLAUDE_CODE_SKIP_AUTH_LOGIN:-${boolToBin cfg.ide.skipAuthLogin}}
-    export CLAUDE_CODE_IDE_SKIP_AUTO_INSTALL=''${CLAUDE_CODE_IDE_SKIP_AUTO_INSTALL:-${boolToBin cfg.ide.skipAutoInstall}}
-
-    export CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR=''${CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR:-${boolToBin cfg.shell.maintainProjectWorkingDir}}
-    export CLAUDE_CODE_SHELL=''${CLAUDE_CODE_SHELL:-${cfg.shell.program}}
-
-    export CLAUDE_CODE_TMPDIR=''${CLAUDE_CODE_TMPDIR:-${cfg.tmpDir}}
-
-    echo "🤖 Claude Code Development Environment loaded"
-    echo "======================================"
-    echo "Claude version: $(claude -v 2>/dev/null || echo unknown)"
-    echo "PROJECT_ROOT: $PROJECT_ROOT"
-    echo "CLAUDE_CONFIG_DIR: $CLAUDE_CONFIG_DIR"
-    echo ""
-  '';
+  # Generate environment variable exports from mappings
+  mkEnvExports =
+    cfg: mappings:
+    concatStringsSep "\n" (
+      map (
+        mapping:
+        let
+          configValue = getAttrFromPath mapping.path cfg;
+          # Handle null values with runtime defaults
+          convertedValue =
+            if configValue == null && mapping ? runtimeDefault then
+              mapping.runtimeDefault
+            else if builtins.isBool configValue then
+              (if configValue then "1" else "0")
+            else
+              toString configValue;
+        in
+        "export ${mapping.envVar}=\${${mapping.envVar}:-${convertedValue}}"
+      ) mappings
+    );
 in
 {
   options.perSystem = flake-parts-lib.mkPerSystemOption (
     { config, pkgs, ... }:
     let
       cfg = config.ai.claude;
+
+      # Shared shellHook for Claude shells
+      mkClaudeShellHook = cfg: ''
+        PROJECT_ROOT=''${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}
+        PROJECT_HASH=''${PROJECT_HASH:-$(printf '%s\n' "$PROJECT_ROOT" | shasum -a 256 | cut -c1-8)}
+
+        # Auto-generated environment variable exports
+        ${mkEnvExports cfg envVarMappings}
+
+        # Create config directory
+        mkdir -p "$CLAUDE_CONFIG_DIR"
+
+        echo "🤖 Claude Code Development Environment loaded"
+        echo "======================================"
+        echo "Claude version: $(claude -v 2>/dev/null || echo unknown)"
+        echo "PROJECT_ROOT: $PROJECT_ROOT"
+        echo "CLAUDE_CONFIG_DIR: $CLAUDE_CONFIG_DIR"
+        echo ""
+      '';
     in
     {
       options.ai.claude = {
@@ -85,25 +207,25 @@ in
             options = {
               default = mkOption {
                 type = types.str;
-                default = "claude-sonnet-4-20250514";
+                default = "claude-sonnet-4-6";
                 description = "Default Claude model to use";
               };
 
               opus = mkOption {
                 type = types.str;
-                default = "claude-opus-4-20250514";
+                default = "claude-opus-4-6";
                 description = "Opus model to use";
               };
 
               sonnet = mkOption {
                 type = types.str;
-                default = "claude-sonnet-4-20250514";
+                default = "claude-sonnet-4-6";
                 description = "Sonnet model to use";
               };
 
               haiku = mkOption {
                 type = types.str;
-                default = "claude-haiku-4-20250514";
+                default = "claude-haiku-4-5-20251001";
                 description = "Haiku model to use";
               };
             };
@@ -210,7 +332,13 @@ in
         configDir = mkOption {
           type = types.nullOr types.str;
           default = null;
-          description = "Claude config directory path (null for default)";
+          description = "Claude config directory path. Defaults to ~/.claude globally, or per-project if isolation enabled";
+        };
+
+        enableProjectIsolation = mkOption {
+          type = types.bool;
+          default = false;
+          description = "Enable per-project config isolation (advanced users only)";
         };
 
         tmpDir = mkOption {

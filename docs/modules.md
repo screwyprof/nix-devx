@@ -81,6 +81,8 @@ nix-devx provides flake-parts modules for development environments.
 | `dangerouslySkipPermissions` | bool | false | Skip permission checks |
 | `baseUrl` | str | `https://api.anthropic.com` | API base URL |
 | `models.default` | str | `claude-sonnet-4-20250514` | Default model |
+| `configDir` | nullOr str | null | Config directory (defaults to ~/.claude globally) |
+| `enableProjectIsolation` | bool | false | Enable per-project config isolation (advanced users only) |
 
 **Provides:**
 - `packages.claude-wrapper`

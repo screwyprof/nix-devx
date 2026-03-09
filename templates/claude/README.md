@@ -12,7 +12,7 @@ nix flake init -t github:screwyprof/nix-devx#claude
 
 - Claude Code with configurable wrapper
 - MCP servers (memory, sequential-thinking)
-- Per-project config directory isolation
+- Global config directory (~/.claude) with opt-in per-project isolation
 - Two devShells:
   - `claude` - respects `dangerouslySkipPermissions` config
   - `claude-unrestricted` - always skips permissions (for trusted environments)
@@ -21,6 +21,18 @@ nix flake init -t github:screwyprof/nix-devx#claude
 
 1. Set `ANTHROPIC_AUTH_TOKEN` environment variable
 2. Run `direnv allow` or `nix develop`
+
+## Configuration
+
+### Per-Project Isolation (Advanced)
+
+By default, Claude uses a global config directory at `~/.claude` for compatibility with VS Code extensions and other tools. To enable per-project isolation:
+
+```nix
+perSystem.ai.claude.enableProjectIsolation = true;
+```
+
+This creates isolated config directories at `~/.local/state/claude/<project-hash>` for each project.
 
 ## Host vs Container
 
