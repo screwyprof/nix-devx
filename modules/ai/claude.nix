@@ -6,6 +6,7 @@ let
     mkOption
     types
     concatStringsSep
+    concatMap
     getAttrFromPath
     ;
 
@@ -140,23 +141,28 @@ let
   ];
 
   # Generate environment variable exports from mappings
+  # Skips mappings where the value is null and no runtimeDefault is provided
   mkEnvExports =
     cfg: mappings:
     concatStringsSep "\n" (
-      map (
+      concatMap (
         mapping:
         let
           configValue = getAttrFromPath mapping.path cfg;
-          # Handle null values with runtime defaults
-          convertedValue =
-            if configValue == null && mapping ? runtimeDefault then
-              mapping.runtimeDefault
-            else if builtins.isBool configValue then
-              (if configValue then "1" else "0")
-            else
-              toString configValue;
         in
-        "export ${mapping.envVar}=\${${mapping.envVar}:-${convertedValue}}"
+        if configValue == null && !(mapping ? runtimeDefault) then
+          [ ]
+        else
+          let
+            convertedValue =
+              if configValue == null then
+                mapping.runtimeDefault
+              else if builtins.isBool configValue then
+                (if configValue then "1" else "0")
+              else
+                toString configValue;
+          in
+          [ "export ${mapping.envVar}=\${${mapping.envVar}:-${convertedValue}}" ]
       ) mappings
     );
 in
@@ -196,9 +202,9 @@ in
         };
 
         baseUrl = mkOption {
-          type = types.str;
-          default = "https://api.anthropic.com";
-          description = "Anthropic API base URL";
+          type = types.nullOr types.str;
+          default = null;
+          description = "Anthropic API base URL (null to use Claude's default)";
         };
 
         models = mkOption {
@@ -206,27 +212,27 @@ in
           type = types.submodule {
             options = {
               default = mkOption {
-                type = types.str;
-                default = "claude-sonnet-4-6";
-                description = "Default Claude model to use";
+                type = types.nullOr types.str;
+                default = null;
+                description = "Default Claude model to use (null to use Claude's default)";
               };
 
               opus = mkOption {
-                type = types.str;
-                default = "claude-opus-4-6";
-                description = "Opus model to use";
+                type = types.nullOr types.str;
+                default = null;
+                description = "Opus model to use (null to use Claude's default)";
               };
 
               sonnet = mkOption {
-                type = types.str;
-                default = "claude-sonnet-4-6";
-                description = "Sonnet model to use";
+                type = types.nullOr types.str;
+                default = null;
+                description = "Sonnet model to use (null to use Claude's default)";
               };
 
               haiku = mkOption {
-                type = types.str;
-                default = "claude-haiku-4-5-20251001";
-                description = "Haiku model to use";
+                type = types.nullOr types.str;
+                default = null;
+                description = "Haiku model to use (null to use Claude's default)";
               };
             };
           };
