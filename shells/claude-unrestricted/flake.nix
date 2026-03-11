@@ -78,8 +78,6 @@
                 echo "Commands:"
                 echo "  claude             - Start Claude Code"
                 echo ""
-                echo "Note: Requires ANTHROPIC_AUTH_TOKEN environment variable"
-                echo ""
               '';
             };
           };
