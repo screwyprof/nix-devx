@@ -81,12 +81,25 @@ teardown() {
 }
 
 @test "claude initializes successfully" {
+  cd "$TEST_DIR"
+
   run nix flake init -t "$FLAKE_ROOT#claude"
   run nix flake lock
-  
+
   nix develop --command claude --version
   run nix develop --command true
 
   assert_success
   assert_output --partial 'Claude Code Development Environment'
+}
+
+@test "claude-unrestricted shell works" {
+  cd "$FLAKE_ROOT/shells/claude-unrestricted"
+
+  run nix flake lock
+  nix develop --command claude --version
+  run nix develop --command true
+
+  assert_success
+  assert_output --partial 'Claude Code Development Shell (unrestricted)'
 }

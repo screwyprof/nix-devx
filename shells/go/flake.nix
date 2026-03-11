@@ -29,7 +29,7 @@
             languages.go.enable = true;
 
             devShells.default = pkgs.mkShellNoCC {
-              inputsFrom = [ config.devShells.go ];
+              inputsFrom = [ config.languages.go.devShell ];
 
               shellHook = ''
                 echo "Go Development Shell"

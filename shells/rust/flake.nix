@@ -29,7 +29,7 @@
             languages.rust.enable = true;
 
             devShells.default = pkgs.mkShellNoCC {
-              inputsFrom = [ config.devShells.rust ];
+              inputsFrom = [ config.languages.rust.devShell ];
 
               shellHook = ''
                 echo "Rust Development Shell"

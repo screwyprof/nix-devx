@@ -67,8 +67,8 @@
       # Default development shell for this repo (host)
       devShells.default = pkgs.mkShellNoCC {
         inputsFrom = [
-          config.devShells.nix
-          config.devShells.claude
+          config.languages.nix.devShell
+          config.ai.claude.devShell
           config.mcp-servers.devShell
           config.pre-commit.devShell
         ];
@@ -90,8 +90,6 @@
           echo "Available devShells:"
           echo "  nix develop .#default    - This shell (Nix + Claude tooling)"
           echo "  nix develop .#container  - Container shell (unrestricted Claude)"
-          echo "  nix develop .#nix        - Nix development only"
-          echo "  nix develop .#claude     - Claude Code only"
           echo ""
         '';
       };
@@ -99,8 +97,8 @@
       # Container development shell (unrestricted Claude for trusted environments)
       devShells.container = pkgs.mkShellNoCC {
         inputsFrom = [
-          config.devShells.nix
-          config.devShells.claude-unrestricted
+          config.languages.nix.devShell
+          config.ai.claude.devShellUnrestricted
           config.mcp-servers.devShell
           config.pre-commit.devShell
         ];

@@ -49,8 +49,6 @@
 
             ai.claude = {
               enable = true;
-              # Set to true only in trusted environments (e.g., devcontainers)
-              # Or use devShells.claude-unrestricted instead
               dangerouslySkipPermissions = false;
             };
 
@@ -66,15 +64,10 @@
             # Default shell - respects dangerouslySkipPermissions setting
             devShells.default = pkgs.mkShellNoCC {
               inputsFrom = [
-                config.devShells.claude
+                config.ai.claude.devShell
+                config.mcp-servers.devShell
               ];
             };
-
-            # Unrestricted shell - always skips permissions
-            # Use this for trusted environments like devcontainers
-            # devShells.container = pkgs.mkShellNoCC {
-            #   inputsFrom = [ config.devShells.claude-unrestricted ];
-            # };
           };
       }
     );

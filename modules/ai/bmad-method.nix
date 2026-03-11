@@ -3,6 +3,8 @@ let
   inherit (lib)
     mkEnableOption
     mkIf
+    mkOption
+    types
     ;
 in
 {
@@ -14,12 +16,18 @@ in
     {
       options.ai.bmad-method = {
         enable = mkEnableOption "BMad Method AI framework";
+
+        devShell = mkOption {
+          type = types.package;
+          readOnly = true;
+          description = "BMad Method development shell";
+        };
       };
 
       config = mkIf cfg.enable {
         packages.bmad-method = pkgs.callPackage ../../pkgs/bmad-method.nix { };
 
-        devShells.bmad-method = pkgs.mkShellNoCC {
+        ai.bmad-method.devShell = pkgs.mkShellNoCC {
           nativeBuildInputs = [ config.packages.bmad-method ];
 
           shellHook = ''

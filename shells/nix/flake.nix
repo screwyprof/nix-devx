@@ -29,7 +29,7 @@
             languages.nix.enable = true;
 
             devShells.default = pkgs.mkShellNoCC {
-              inputsFrom = [ config.devShells.nix ];
+              inputsFrom = [ config.languages.nix.devShell ];
 
               shellHook = ''
                 echo "Nix Development Shell"

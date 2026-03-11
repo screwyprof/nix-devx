@@ -52,7 +52,7 @@
 
             devShells.default = pkgs.mkShellNoCC {
               inputsFrom = [
-                config.devShells.nix
+                config.languages.nix.devShell
               ];
 
               shellHook = ''

@@ -4,7 +4,9 @@ let
     mkEnableOption
     mkIf
     mkMerge
+    mkOption
     optionalAttrs
+    types
     ;
 in
 {
@@ -24,6 +26,12 @@ in
         enable = mkEnableOption "Nix language tooling";
 
         hooks = mkEnableOption "recommended git hooks for Nix";
+
+        devShell = mkOption {
+          type = types.package;
+          readOnly = true;
+          description = "Nix development shell";
+        };
       };
 
       config = mkIf cfg.enable (mkMerge [
@@ -31,7 +39,7 @@ in
           formatter = pkgs.nixfmt-tree;
 
           # Nix devShell
-          devShells.nix = pkgs.mkShellNoCC {
+          languages.nix.devShell = pkgs.mkShellNoCC {
             nativeBuildInputs = with pkgs; [
               nixfmt
               statix

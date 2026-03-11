@@ -38,12 +38,18 @@ in
         };
 
         hooks = mkEnableOption "recommended git hooks for Rust";
+
+        devShell = mkOption {
+          type = types.package;
+          readOnly = true;
+          description = "Rust development shell";
+        };
       };
 
       config = mkIf cfg.enable (mkMerge [
         {
           # Self-contained Rust devShell
-          devShells.rust = pkgs.mkShellNoCC {
+          languages.rust.devShell = pkgs.mkShellNoCC {
             nativeBuildInputs =
               (
                 if cfg.toolchain != null then

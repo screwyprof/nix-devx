@@ -54,7 +54,7 @@
 
             devShells.default = pkgs.mkShellNoCC {
               inputsFrom = [
-                config.devShells.rust
+                config.languages.rust.devShell
               ];
 
               shellHook = ''

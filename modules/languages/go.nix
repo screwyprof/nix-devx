@@ -38,12 +38,18 @@ in
         };
 
         hooks = mkEnableOption "recommended git hooks for Go";
+
+        devShell = mkOption {
+          type = types.package;
+          readOnly = true;
+          description = "Go development shell";
+        };
       };
 
       config = mkIf cfg.enable (mkMerge [
         {
           # Self-contained Go devShell
-          devShells.go = pkgs.mkShellNoCC {
+          languages.go.devShell = pkgs.mkShellNoCC {
             nativeBuildInputs = with pkgs; [
               go
               gopls

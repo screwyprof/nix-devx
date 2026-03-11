@@ -352,6 +352,18 @@ in
           default = "/tmp/claude";
           description = "Claude temporary directory";
         };
+
+        devShell = mkOption {
+          type = types.package;
+          readOnly = true;
+          description = "Claude Code development shell (respects dangerouslySkipPermissions)";
+        };
+
+        devShellUnrestricted = mkOption {
+          type = types.package;
+          readOnly = true;
+          description = "Claude Code development shell (always skips permissions)";
+        };
       };
 
       config = mkIf cfg.enable {
@@ -372,7 +384,7 @@ in
         };
 
         # Main devShell - respects dangerouslySkipPermissions config
-        devShells.claude = pkgs.mkShellNoCC {
+        ai.claude.devShell = pkgs.mkShellNoCC {
           nativeBuildInputs = with pkgs; [
             nodejs
             config.packages.claude-wrapper
@@ -383,7 +395,7 @@ in
 
         # Unrestricted devShell - always skips permissions
         # Use this for trusted environments like devcontainers
-        devShells.claude-unrestricted = pkgs.mkShellNoCC {
+        ai.claude.devShellUnrestricted = pkgs.mkShellNoCC {
           nativeBuildInputs = with pkgs; [
             nodejs
             (pkgs.writeShellApplication {

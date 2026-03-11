@@ -54,7 +54,7 @@
 
             devShells.default = pkgs.mkShellNoCC {
               inputsFrom = [
-                config.devShells.go
+                config.languages.go.devShell
               ];
 
               shellHook = ''

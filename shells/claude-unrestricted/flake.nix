@@ -1,5 +1,5 @@
 {
-  description = "Claude Code development shell";
+  description = "Claude Code development shell (unrestricted)";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
@@ -51,7 +51,7 @@
 
             ai.claude = {
               enable = true;
-              dangerouslySkipPermissions = false;
+              dangerouslySkipPermissions = true;
             };
 
             # Enable MCP servers
@@ -65,13 +65,13 @@
 
             devShells.default = pkgs.mkShellNoCC {
               inputsFrom = [
-                config.ai.claude.devShell
+                config.ai.claude.devShellUnrestricted
                 config.mcp-servers.devShell
               ];
 
               shellHook = ''
-                echo "Claude Code Development Shell"
-                echo "============================="
+                echo "Claude Code Development Shell (unrestricted)"
+                echo "============================================="
                 echo ""
                 echo "MCP Servers: memory, sequential-thinking"
                 echo ""

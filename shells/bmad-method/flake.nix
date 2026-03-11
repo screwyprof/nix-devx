@@ -29,7 +29,7 @@
             ai.bmad-method.enable = true;
 
             devShells.default = pkgs.mkShellNoCC {
-              inputsFrom = [ config.devShells.bmad-method ];
+              inputsFrom = [ config.ai.bmad-method.devShell ];
             };
           };
       }

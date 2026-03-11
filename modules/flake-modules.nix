@@ -34,6 +34,11 @@
       description = "Claude Code environment with MCP servers";
     };
 
+    claude-unrestricted = {
+      path = ./../shells/claude-unrestricted;
+      description = "Claude Code environment with MCP servers (unrestricted)";
+    };
+
     default = self.templates.minimal;
   };
 }
