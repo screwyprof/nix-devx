@@ -15,9 +15,8 @@ result*
 .mcp.json
 .claude/
 
-# lock files
-shells/*/flake.lock
-templates/*flake.lock
+# lock files (templates are ephemeral, shells are committed)
+templates/*/flake.lock
 
 # pre-commit hooks
 .pre-commit-config.yaml
