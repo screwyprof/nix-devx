@@ -31,7 +31,7 @@ nix-devx provides flake-parts modules for development environments.
 | `gobin` | nullOr str | null | GOBIN directory (null for per-project) |
 | `gopath` | str | `$XDG_DATA_HOME/go` | GOPATH for module cache |
 
-**Provides:** `devShells.go`
+**Provides:** `languages.go.devShell`
 
 **Tools:** go, gopls, delve, gotools, golangci-lint, gofumpt, golines, gci
 
@@ -48,7 +48,7 @@ nix-devx provides flake-parts modules for development environments.
 | `cargoHome` | nullOr str | null | CARGO_HOME (null for per-project) |
 | `toolchain` | nullOr package | null | Custom toolchain |
 
-**Provides:** `devShells.rust`
+**Provides:** `languages.rust.devShell`
 
 **Tools:** rustc, cargo, bacon, cargo-edit, cargo-audit, cargo-nextest, cargo-watch, lcov
 
@@ -63,7 +63,7 @@ nix-devx provides flake-parts modules for development environments.
 | `enable` | bool | false | Enable Nix tooling |
 | `hooks` | bool | false | Enable pre-commit hooks |
 
-**Provides:** `devShells.nix`, `formatter`
+**Provides:** `languages.nix.devShell`, `formatter`
 
 **Tools:** nixfmt, statix, deadnix
 
@@ -86,8 +86,8 @@ nix-devx provides flake-parts modules for development environments.
 
 **Provides:**
 - `packages.claude-wrapper`
-- `devShells.claude` - respects `dangerouslySkipPermissions`
-- `devShells.claude-unrestricted` - always skips permissions
+- `ai.claude.devShell` - respects `dangerouslySkipPermissions`
+- `ai.claude.devShellUnrestricted` - always skips permissions
 
 **Note:** Claude Code requires `allowUnfree = true`. Telemetry is disabled by default.
 
@@ -109,7 +109,7 @@ software development lifecycle.
 |--------|------|---------|-------------|
 | `enable` | bool | false | Enable BMad Method |
 
-**Provides:** `packages.bmad-method`, `devShells.bmad-method`
+**Provides:** `packages.bmad-method`, `ai.bmad-method.devShell`
 
 ---
 
@@ -125,9 +125,9 @@ perSystem = { config, pkgs, ... }: {
 
   devShells.default = pkgs.mkShellNoCC {
     inputsFrom = [
-      config.devShells.go
-      config.devShells.nix
-      config.devShells.claude
+      config.languages.go.devShell
+      config.languages.nix.devShell
+      config.ai.claude.devShell
     ];
   };
 };

@@ -87,7 +87,7 @@ nix flake init -t github:screwyprof/nix-devx#claude
 - Claude Code with configurable wrapper
 - MCP servers (memory, sequential-thinking)
 - Per-project config directory isolation
-- Both restricted and unrestricted devShells
+- MCP servers included in devShell
 
 ## After Initialization
 
@@ -113,8 +113,8 @@ imports = [
 ```nix
 devShells.default = pkgs.mkShellNoCC {
   inputsFrom = [
-    config.devShells.go
-    config.devShells.claude
+    config.languages.go.devShell
+    config.ai.claude.devShell
   ];
 };
 ```
@@ -123,7 +123,7 @@ devShells.default = pkgs.mkShellNoCC {
 
 ```nix
 devShells.default = pkgs.mkShellNoCC {
-  inputsFrom = [ config.devShells.go ];
+  inputsFrom = [ config.languages.go.devShell ];
 
   nativeBuildInputs = with pkgs; [
     # Add your packages here

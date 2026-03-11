@@ -24,7 +24,7 @@ Modular development environments with flake-parts.
         languages.go.enable = true;
 
         devShells.default = pkgs.mkShellNoCC {
-          inputsFrom = [ config.devShells.go ];
+          inputsFrom = [ config.languages.go.devShell ];
         };
       };
     };

@@ -52,13 +52,27 @@ nix develop "github:screwyprof/nix-devx?dir=shells/nix" --no-write-lock-file
 
 ### claude
 
-Claude Code environment with MCP servers.
+Claude Code environment with MCP servers (restricted — respects permissions).
 
 ```bash
 nix develop "github:screwyprof/nix-devx?dir=shells/claude" --no-write-lock-file
 ```
 
 **Tools:** Claude Code, MCP servers (memory, sequential-thinking)
+
+**Note:** Requires `ANTHROPIC_AUTH_TOKEN` environment variable.
+
+---
+
+### claude-unrestricted
+
+Claude Code environment with MCP servers (skips permission checks — for trusted environments).
+
+```bash
+nix develop "github:screwyprof/nix-devx?dir=shells/claude-unrestricted" --no-write-lock-file
+```
+
+**Tools:** Claude Code (unrestricted), MCP servers (memory, sequential-thinking)
 
 **Note:** Requires `ANTHROPIC_AUTH_TOKEN` environment variable.
 

@@ -13,9 +13,7 @@ nix flake init -t github:screwyprof/nix-devx#claude
 - Claude Code with configurable wrapper
 - MCP servers (memory, sequential-thinking)
 - Global config directory (~/.claude) with opt-in per-project isolation
-- Two devShells:
-  - `claude` - respects `dangerouslySkipPermissions` config
-  - `claude-unrestricted` - always skips permissions (for trusted environments)
+- MCP servers included in devShell
 
 ## After Init
 
@@ -40,7 +38,7 @@ For devcontainers or other trusted environments, use the unrestricted shell:
 
 ```nix
 devShells.default = pkgs.mkShellNoCC {
-  inputsFrom = [ config.devShells.claude-unrestricted ];
+  inputsFrom = [ config.ai.claude.devShellUnrestricted ];
 };
 ```
 

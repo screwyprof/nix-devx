@@ -107,12 +107,12 @@ perSystem = { config, pkgs, ... }: {
 
   # Host - normal permissions
   devShells.default = pkgs.mkShellNoCC {
-    inputsFrom = [ config.devShells.claude ];
+    inputsFrom = [ config.ai.claude.devShell ];
   };
 
   # Container - unrestricted
   devShells.container = pkgs.mkShellNoCC {
-    inputsFrom = [ config.devShells.claude-unrestricted ];
+    inputsFrom = [ config.ai.claude.devShellUnrestricted ];
   };
 };
 ```
