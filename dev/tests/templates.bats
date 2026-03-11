@@ -94,11 +94,10 @@ teardown() {
 }
 
 @test "claude-unrestricted shell works" {
-  cd "$FLAKE_ROOT/shells/claude-unrestricted"
+  cd "$TEST_DIR"
 
-  run nix flake lock
-  nix develop --command claude --version
-  run nix develop --command true
+  nix develop "path:$FLAKE_ROOT?dir=shells/claude-unrestricted" --no-write-lock-file --command claude --version
+  run nix develop "path:$FLAKE_ROOT?dir=shells/claude-unrestricted" --no-write-lock-file --command true
 
   assert_success
   assert_output --partial 'Claude Code Development Shell (unrestricted)'
