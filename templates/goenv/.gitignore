@@ -45,6 +45,7 @@ result-*
 # direnv
 .direnv/
 /.envrc
+/.devcontainer/.envrc
 
 # Claude code
 .claude/
