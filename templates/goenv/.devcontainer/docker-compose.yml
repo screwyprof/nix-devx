@@ -8,6 +8,7 @@ services:
       - ..:/workspaces:cached
       - nix-store:/nix
       - claude-data:/home/vscode/.claude
+      - ./.envrc:/workspaces/.envrc:ro # different .envrc for container
     cap_add:
       - NET_ADMIN  # needed for network debugging tools
       - NET_RAW    # needed for network debugging tools
