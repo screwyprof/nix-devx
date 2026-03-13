@@ -16,7 +16,7 @@
 	},
 
 	"shutdownAction": "stopCompose",
-	"postCreateCommand": "./.devcontainer/post-create.sh",
+	"postCreateCommand": "sh ./.devcontainer/post-create.sh",
 
 	"customizations": {
 		"vscode": {
