@@ -15,7 +15,6 @@ if [ -f "/etc/zsh/zshrc" ] && ! grep -qF 'direnv hook zsh' /etc/zsh/zshrc; then
     echo 'eval "$(direnv hook zsh)"' | sudo tee -a /etc/zsh/zshrc > /dev/null
 fi
 
-# Automatically allow the workspace .envrc if it exists
-if [ -f "/workspaces/.envrc" ]; then
-    direnv allow /workspaces/.envrc
-fi
+# Create .envrc for the container and activate direnv
+cp /workspaces/.devcontainer/.envrc /workspaces/.envrc
+direnv allow /workspaces/.envrc
