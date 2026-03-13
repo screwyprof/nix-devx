@@ -1,6 +1,6 @@
 # env file
 .env
-.envrc
+/.envrc
 
 # Editor/IDE
 # .idea/
@@ -8,7 +8,7 @@
 .direnv/
 result*
 .devcontainer/docker-compose.override.yml
-.devcontainer/.envrc
+/.devcontainer/.envrc
 
 # AI
 .serena/
@@ -16,7 +16,6 @@ result*
 .claude/
 !templates/**/.claude/
 !templates/**/.vscode/
-!templates/**/.envrc
 
 # lock files (templates are ephemeral, shells are committed)
 templates/*/flake.lock
