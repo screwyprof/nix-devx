@@ -1,0 +1,45 @@
+{
+	"name": "Go + Claude",
+	"dockerComposeFile": ["docker-compose.yml"],
+	"service": "gopher-env",
+	"overrideCommand": false,
+	"workspaceFolder": "/workspaces",
+
+	"features": {
+		"ghcr.io/nils-geistmann/devcontainers-features/zsh:0": {
+			"defaultUser": true,
+			"setLocale": true,
+			"theme": "robbyrussell",
+			"plugins": "git docker",
+			"desiredLocale": "en_US.UTF-8 UTF-8"
+		}
+	},
+
+	"shutdownAction": "stopCompose",
+	"postCreateCommand": "./.devcontainer/post-create.sh",
+
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"anthropic.claude-code",
+				"jnoortheen.nix-ide",
+				"mkhl.direnv",
+				"golang.go",
+				"usernamehw.errorlens",
+				"ryanluker.vscode-coverage-gutters",
+				"premparihar.gotestexplorer",
+				"ms-vscode.makefile-tools",
+				"ms-vscode.live-server"
+			],
+			"settings": {
+				"task.allowAutomaticTasks": "off",
+				"remote.autoForwardPortsFallback": 0,
+				"coverage-gutters.coverageFileNames": ["coverage/coverage.out"],
+				"coverage-gutters.coverageReportFileName": "coverage/coverage.html"
+			}
+		}
+	},
+
+	"remoteUser": "vscode",
+	"containerUser": "vscode"
+}

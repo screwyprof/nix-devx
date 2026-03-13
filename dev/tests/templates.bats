@@ -80,6 +80,31 @@ teardown() {
   assert_output --partial 'Nix development environment'
 }
 
+@test "goenv initializes successfully" {
+  cd "$TEST_DIR"
+
+  run nix flake init -t "$FLAKE_ROOT#goenv"
+
+  git init
+  git add -A
+  run nix flake lock
+
+  nix develop --command go version
+  nix develop --command golangci-lint version
+  nix develop --command claude --version
+  nix develop --command statix --version
+
+  run nix build
+  assert_success
+
+  run ./result/bin/hello
+  assert_success
+  assert_output 'Hello, World!'
+
+  run nix develop --command go test ./...
+  assert_success
+}
+
 @test "claude initializes successfully" {
   cd "$TEST_DIR"
 

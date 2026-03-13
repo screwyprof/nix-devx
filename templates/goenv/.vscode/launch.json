@@ -1,0 +1,27 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug binary",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}",
+      "env": {
+        "CGO_CFLAGS": "-Wno-error",
+        "CGO_CPPFLAGS": "-Wno-error"
+      }
+    },
+    {
+      "name": "Debug tests",
+      "type": "go",
+      "request": "launch",
+      "mode": "test",
+      "program": "${workspaceFolder}",
+      "env": {
+        "CGO_CFLAGS": "-Wno-error",
+        "CGO_CPPFLAGS": "-Wno-error"
+      }
+    }
+  ]
+}

@@ -20,10 +20,13 @@ in
     let
       cfg = config.languages.nix;
       hasPreCommit = options ? pre-commit;
+      hasTreefmt = options ? treefmt;
     in
     {
       options.languages.nix = {
         enable = mkEnableOption "Nix language tooling";
+
+        formatters = mkEnableOption "recommended treefmt formatters for Nix";
 
         hooks = mkEnableOption "recommended git hooks for Nix";
 
@@ -36,8 +39,6 @@ in
 
       config = mkIf cfg.enable (mkMerge [
         {
-          formatter = pkgs.nixfmt-tree;
-
           # Nix devShell
           languages.nix.devShell = pkgs.mkShellNoCC {
             nativeBuildInputs = with pkgs; [
@@ -55,6 +56,16 @@ in
             '';
           };
         }
+        # Fallback formatter when treefmt module is not loaded
+        (optionalAttrs (!hasTreefmt) {
+          formatter = pkgs.nixfmt-tree;
+        })
+        # treefmt formatters (only if treefmt module is loaded)
+        (optionalAttrs hasTreefmt {
+          treefmt.programs = mkIf cfg.formatters {
+            nixfmt.enable = true;
+          };
+        })
         (optionalAttrs hasPreCommit {
           # Configure git hooks (only if hooks.enable is true AND pre-commit module is loaded)
           pre-commit.settings.hooks = mkIf cfg.hooks {

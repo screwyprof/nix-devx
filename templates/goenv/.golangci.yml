@@ -1,0 +1,150 @@
+version: "2"
+linters:
+  default: none
+  enable:
+    - asasalint
+    - asciicheck
+    - bidichk
+    - bodyclose
+    - canonicalheader
+    - containedctx
+    - contextcheck
+    - cyclop
+    - dogsled
+    - dupl
+    - durationcheck
+    - err113
+    - errcheck
+    - errchkjson
+    - errname
+    - errorlint
+    - exhaustive
+    - forcetypeassert
+    - funlen
+    - gocognit
+    #- goconst
+    - gocritic
+    - gocyclo
+    - godot
+    - goheader
+    - gomoddirectives
+    - gomodguard
+    - goprintffuncname
+    - gosec
+    - govet
+    - grouper
+    - importas
+    - ineffassign
+    - interfacebloat
+    - lll
+    - maintidx
+    - makezero
+    - misspell
+    - modernize
+    - nakedret
+    - nestif
+    #- nilerr
+    - nilnil
+    - nilnesserr #nilness + nilerr
+    - nlreturn
+    - noctx
+    - nolintlint
+    - nonamedreturns
+    - nosprintfhostport
+    - paralleltest
+    - perfsprint
+    - prealloc
+    - predeclared
+    - promlinter
+    - reassign
+    - recvcheck
+    - revive
+    - rowserrcheck
+    - sloglint
+    - spancheck
+    - sqlclosecheck
+    - staticcheck
+    - testableexamples
+    - testifylint
+    - testpackage
+    - thelper
+    - tparallel
+    - unconvert
+    - unparam
+    - unused
+    - usestdlibvars
+    - wastedassign
+    - whitespace
+    - wrapcheck
+    - wsl_v5
+  settings:
+    goconst:
+      min-len: 2
+      min-occurrences: 2
+    gocyclo:
+      min-complexity: 10
+    nolintlint:
+      allow-unused: true
+    revive:
+      rules:
+        - name: unused-parameter
+          disabled: true
+        - name: unused-receiver
+          disabled: true
+    wrapcheck:
+      ignore-sigs:
+        - .Wrap(
+        - json.Marshal(
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - linters:
+          - dupl
+          - funlen
+          - gosec
+          - maintidx
+        path: _test\.go
+      - linters:
+          - dupl
+          - funlen
+          - gosec
+        path: test_helpers\.go
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+issues:
+  new-from-rev: main
+formatters:
+  enable:
+    - gci
+    - gofmt
+    - gofumpt
+    - goimports
+    - golines
+  settings:
+    gci:
+      sections:
+        - standard
+        - default
+        - prefix(hello)
+    gofumpt:
+      module-path: hello
+    goimports:
+      local-prefixes:
+        - hello
+    golines:
+      # Target maximum line length.
+      # Default: 100
+      max-len: 120
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

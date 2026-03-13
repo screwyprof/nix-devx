@@ -1,0 +1,13 @@
+{
+    "recommendations": [
+        "anthropic.claude-code",
+        "jnoortheen.nix-ide",
+        "mkhl.direnv",
+        "golang.go",
+        "usernamehw.errorlens",
+        "ryanluker.vscode-coverage-gutters",
+        "premparihar.gotestexplorer",
+        "ms-vscode.makefile-tools",
+        "ms-vscode.live-server"
+    ]
+}

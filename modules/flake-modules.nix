@@ -29,6 +29,11 @@
       description = "Nix development environment with formatting and linting";
     };
 
+    goenv = {
+      path = ./../templates/goenv;
+      description = "Go + Claude Code + Nix devcontainer with MCP servers, coverage, and debugging";
+    };
+
     claude = {
       path = ./../templates/claude;
       description = "Claude Code environment with MCP servers";

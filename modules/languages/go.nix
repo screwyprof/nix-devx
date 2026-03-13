@@ -20,6 +20,7 @@ in
     let
       cfg = config.languages.go;
       hasPreCommit = options ? pre-commit;
+      hasTreefmt = options ? treefmt;
     in
     {
       options.languages.go = {
@@ -36,6 +37,8 @@ in
           default = "\${XDG_DATA_HOME:-$HOME/.local/share}/go";
           description = "Go path for module cache";
         };
+
+        formatters = mkEnableOption "recommended treefmt formatters for Go";
 
         hooks = mkEnableOption "recommended git hooks for Go";
 
@@ -98,6 +101,12 @@ in
             '';
           };
         }
+        # treefmt formatters (only if treefmt module is loaded)
+        (optionalAttrs hasTreefmt {
+          treefmt.programs = mkIf cfg.formatters {
+            golangci-lint.enable = true;
+          };
+        })
         (optionalAttrs hasPreCommit {
           # Configure git hooks (only if hooks.enable is true AND pre-commit module is loaded)
           pre-commit.settings.hooks = mkIf cfg.hooks {

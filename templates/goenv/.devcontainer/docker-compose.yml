@@ -1,0 +1,20 @@
+services:
+  gopher-env:
+    image: ghcr.io/cachix/devenv/devcontainer
+    environment:
+      - CLAUDE_CODE_OAUTH_TOKEN=${CLAUDE_CODE_OAUTH_TOKEN}
+      - CLAUDE_CONFIG_DIR=/home/vscode/.claude
+    volumes:
+      - ..:/workspaces:cached
+      - nix-store:/nix
+      - claude-data:/home/vscode/.claude
+      - ./.envrc:/workspaces/.envrc
+    cap_add:
+      - NET_ADMIN  # needed for network debugging tools
+      - NET_RAW    # needed for network debugging tools
+    security_opt:
+      - seccomp:unconfined # needed for delve debugger (ptrace)
+
+volumes:
+  nix-store:
+  claude-data:

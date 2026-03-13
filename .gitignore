@@ -14,6 +14,8 @@ result*
 .serena/
 .mcp.json
 .claude/
+!templates/**/.claude/
+!templates/**/.vscode/
 
 # lock files (templates are ephemeral, shells are committed)
 templates/*/flake.lock
