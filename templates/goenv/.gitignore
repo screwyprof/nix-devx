@@ -44,7 +44,7 @@ result-*
 
 # direnv
 .direnv/
-.envrc
+/.envrc
 
 # Claude code
 .claude/
