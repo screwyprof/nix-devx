@@ -16,6 +16,7 @@ result*
 .claude/
 !templates/**/.claude/
 !templates/**/.vscode/
+!templates/**/.envrc
 
 # lock files (templates are ephemeral, shells are committed)
 templates/*/flake.lock
