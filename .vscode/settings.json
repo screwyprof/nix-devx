@@ -68,5 +68,6 @@
   // File Associations
   "files.associations": {
     "*.go": "go"
-  }
+  },
+  "makefile.configureOnOpen": false
 }

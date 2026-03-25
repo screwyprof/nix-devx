@@ -8,16 +8,16 @@
 
 buildNpmPackage rec {
   pname = "bmad-method";
-  version = "6.0.0-alpha.12";
+  version = "6.2.1";
 
   src = fetchFromGitHub {
     owner = "bmad-code-org";
     repo = "BMAD-METHOD";
-    rev = "9d510fc0751889a521f50fc3575393b09bd90e9b";
-    hash = "sha256-QYH6M7qz++CuXYBeh4LWSlB1JByuinhuG3PwwAkt6Zs=";
+    rev = "fce9d6c0c8ad893f88af9dea69cfcbc8f9f79896";
+    hash = "sha256-I2Ko58t5/Zqoy/w4aTE4wat5boOy0BwURq0J0ZPm+q8=";
   };
 
-  npmDepsHash = "sha256-AJaVkMAkNmfGFqOoBjXbWLMJc14KjdWhIsB1RFYKQug=";
+  npmDepsHash = "sha256-KEmCJMH2aWepRgp07Vg7OZKuP2mrDxlJ5PPLwTdI9NY=";
 
   nodejs = nodejs_20;
 
