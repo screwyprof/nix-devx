@@ -133,6 +133,7 @@ in
             golangci-lint = {
               enable = true;
               types_or = [ "go" ];
+              extraPackages = with goPkgs; [ go ];
             };
           };
         })
