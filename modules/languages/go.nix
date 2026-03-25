@@ -21,6 +21,26 @@ in
       cfg = config.languages.go;
       hasPreCommit = options ? pre-commit;
       hasTreefmt = options ? treefmt;
+
+      # gci v0.13.x is broken with Go 1.26 due to linkname checks; use v0.14.0
+      goPkgs = pkgs.extend (
+        _final: prev: {
+          gci = prev.gci.overrideAttrs (old: {
+            version = "0.14.0";
+            src = prev.fetchFromGitHub {
+              owner = "daixiang0";
+              repo = "gci";
+              rev = "v0.14.0";
+              hash = "sha256-+qoHORHUMgr03v3RB+7+g9O/tlDkQKFmKybma0FdhVs=";
+            };
+            vendorHash = "sha256-MS6Ei58HpR/ueqdmGEx15WoSSSwDpQUcxAWz36UnhmA=";
+            subPackages = [ "." ];
+            meta = old.meta // {
+              broken = false;
+            };
+          });
+        }
+      );
     in
     {
       options.languages.go = {
@@ -52,8 +72,8 @@ in
       config = mkIf cfg.enable (mkMerge [
         {
           # Self-contained Go devShell
-          languages.go.devShell = pkgs.mkShellNoCC {
-            nativeBuildInputs = with pkgs; [
+          languages.go.devShell = goPkgs.mkShellNoCC {
+            nativeBuildInputs = with goPkgs; [
               go
               gopls
               delve
