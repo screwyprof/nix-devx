@@ -80,6 +80,7 @@ in
               ]);
 
             # Environment variables
+            #TODO: this doesn't work when included in external flakes
             RUST_BACKTRACE = "full";
             CARGO_NET_GIT_FETCH_WITH_CLI = "true";
             CARGO_HTTP_MULTIPLEXING = "true";
@@ -106,6 +107,10 @@ in
               }
               export CARGO_TARGET_DIR="$CARGO_HOME/target"
               export PATH="$CARGO_HOME/bin:$PATH"
+              export RUST_BACKTRACE = "full";
+              export CARGO_NET_GIT_FETCH_WITH_CLI = "true";
+              export CARGO_HTTP_MULTIPLEXIN = "true";
+              export RUST_SRC_PATH="${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}"
 
               # Create directories
               mkdir -p "$CARGO_HOME/bin"
