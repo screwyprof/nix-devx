@@ -57,6 +57,8 @@ in
                 else
                   [
                     pkgs.rustc
+                    pkgs.rust-analyzer
+                    pkgs.rustfmt
                     pkgs.cargo
                   ]
               )
@@ -73,6 +75,7 @@ in
                 lcov
 
                 # Linters
+                clippy
                 checkmake
               ]);
 
