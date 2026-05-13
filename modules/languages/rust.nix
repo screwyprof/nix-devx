@@ -83,6 +83,7 @@ in
             RUST_BACKTRACE = "full";
             CARGO_NET_GIT_FETCH_WITH_CLI = "true";
             CARGO_HTTP_MULTIPLEXING = "true";
+            RUST_SRC_PATH = "${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}";
 
             # Shell initialization
             shellHook = ''
