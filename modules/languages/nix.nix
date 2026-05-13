@@ -42,6 +42,7 @@ in
           # Nix devShell
           languages.nix.devShell = pkgs.mkShellNoCC {
             nativeBuildInputs = with pkgs; [
+              nixd
               nixfmt
               statix
               deadnix
