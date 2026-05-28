@@ -27,10 +27,16 @@ in
       cargoBin =
         if cfg.toolchain != null then "${cfg.toolchain}/bin/cargo" else "${pkgs.cargo}/bin/cargo";
 
+      # cargo finds subcommands (fmt, clippy) via PATH, not via the cargo binary path.
+      # Export the toolchain bin dir so cargo-fmt and cargo-clippy are resolvable.
+      toolchainBin =
+        if cfg.toolchain != null then "${cfg.toolchain}/bin" else "${pkgs.cargo}/bin";
+
       preCommitHook = pkgs.writeShellScript "pre-commit-rust" ''
         set -e
-        ${cargoBin} fmt --check || { echo "  Run 'cargo fmt' to fix formatting"; exit 1; }
-        ${cargoBin} clippy -- -D warnings
+        export PATH="${toolchainBin}:$PATH"
+        cargo fmt --check || { echo "  Run 'cargo fmt' to fix formatting"; exit 1; }
+        cargo clippy -- -D warnings
       '';
     in
     {
