@@ -21,6 +21,7 @@ in
       cfg = config.languages.nix;
       hasPreCommit = options ? pre-commit;
       hasTreefmt = options ? treefmt;
+
     in
     {
       options.languages.nix = {

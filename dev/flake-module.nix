@@ -27,14 +27,11 @@
       ...
     }:
     {
-      # Enable Nix language for this repository
-      languages.nix.enable = true;
-
-      # Enable rust module for testing
-      languages.rust.enable = true;
-
-      # Enable recommended git hooks for Nix
-      languages.nix.hooks = true;
+      languages = {
+        nix.enable = true;
+        nix.hooks = true;
+        rust.enable = true;
+      };
 
       # Configure nix-filter for this project
       pre-commit.settings.src = inputs.nix-filter.lib.filter {
@@ -68,73 +65,73 @@
         flavors.claude-code.enable = true;
       };
 
-      # Default development shell for this repo (host)
-      devShells.default = pkgs.mkShellNoCC {
-        inputsFrom = [
-          config.languages.nix.devShell
-          config.ai.claude.devShell
-          config.mcp-servers.devShell
-          config.pre-commit.devShell
-        ];
+      devShells = {
+        default = pkgs.mkShellNoCC {
+          inputsFrom = [
+            config.languages.nix.devShell
+            config.ai.claude.devShell
+            config.mcp-servers.devShell
+            config.pre-commit.devShell
+          ];
 
-        nativeBuildInputs = [
-          (pkgs.bats.withLibraries (p: [
-            p.bats-support
-            p.bats-assert
-          ]))
-          pkgs.delta
-          pkgs.shellcheck
-        ];
+          nativeBuildInputs = [
+            (pkgs.bats.withLibraries (p: [
+              p.bats-support
+              p.bats-assert
+            ]))
+            pkgs.delta
+            pkgs.shellcheck
+          ];
 
-        shellHook = ''
-          echo "nix-devx"
-          echo "========"
-          echo "Modular development environments with flake-parts"
-          echo ""
-          echo "Available devShells:"
-          echo "  nix develop .#default    - This shell (Nix + Claude tooling)"
-          echo "  nix develop .#container  - Container shell (unrestricted Claude)"
-          echo ""
-        '';
-      };
+          shellHook = ''
+            echo "nix-devx"
+            echo "========"
+            echo "Modular development environments with flake-parts"
+            echo ""
+            echo "Available devShells:"
+            echo "  nix develop .#default    - This shell (Nix + Claude tooling)"
+            echo "  nix develop .#container  - Container shell (unrestricted Claude)"
+            echo ""
+          '';
+        };
 
-      # Container development shell (unrestricted Claude for trusted environments)
-      devShells.container = pkgs.mkShellNoCC {
-        inputsFrom = [
-          config.languages.nix.devShell
-          config.ai.claude.devShellUnrestricted
-          config.mcp-servers.devShell
-          config.pre-commit.devShell
-        ];
+        container = pkgs.mkShellNoCC {
+          inputsFrom = [
+            config.languages.nix.devShell
+            config.ai.claude.devShellUnrestricted
+            config.mcp-servers.devShell
+            config.pre-commit.devShell
+          ];
 
-        nativeBuildInputs = [
-          (pkgs.bats.withLibraries (p: [
-            p.bats-support
-            p.bats-assert
-          ]))
-          pkgs.delta
-          pkgs.shellcheck
-        ];
+          nativeBuildInputs = [
+            (pkgs.bats.withLibraries (p: [
+              p.bats-support
+              p.bats-assert
+            ]))
+            pkgs.delta
+            pkgs.shellcheck
+          ];
 
-        shellHook = ''
-          echo "nix-devx (container)"
-          echo "===================="
-          echo "Modular development environments with flake-parts"
-          echo ""
-          echo "Running in unrestricted mode (trusted container environment)"
-          echo ""
-        '';
-      };
+          shellHook = ''
+            echo "nix-devx (container)"
+            echo "===================="
+            echo "Modular development environments with flake-parts"
+            echo ""
+            echo "Running in unrestricted mode (trusted container environment)"
+            echo ""
+          '';
+        };
 
-      # Direct shell — verifies tools, env vars, and PROJECT_ROOT detection
-      devShells."rust-test" = config.languages.rust.devShell;
+        # Direct shell — verifies tools, env vars, and PROJECT_ROOT detection
+        "rust-test" = config.languages.rust.devShell;
 
-      # Nested shell — verifies env vars propagate through inputsFrom
-      devShells."rust-nested" = pkgs.mkShellNoCC {
-        inputsFrom = [ config.languages.rust.devShell ];
-        shellHook = ''
-          echo "Nested Rust shell (inputsFrom propagation test)"
-        '';
+        # Nested shell — verifies env vars propagate through inputsFrom
+        "rust-nested" = pkgs.mkShellNoCC {
+          inputsFrom = [ config.languages.rust.devShell ];
+          shellHook = ''
+            echo "Nested Rust shell (inputsFrom propagation test)"
+          '';
+        };
       };
     };
 }

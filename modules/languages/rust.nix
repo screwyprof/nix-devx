@@ -21,23 +21,15 @@ in
     let
       cfg = config.languages.rust;
       hasTreefmt = options ? treefmt;
+      hasPreCommit = options ? pre-commit;
 
-      # Nix-managed hook script — absolute store paths, no PATH dependency.
-      # Symlinked into .git/hooks/ when the repo is explicitly trusted.
       cargoBin =
         if cfg.toolchain != null then "${cfg.toolchain}/bin/cargo" else "${pkgs.cargo}/bin/cargo";
 
       # cargo finds subcommands (fmt, clippy) via PATH, not via the cargo binary path.
       # Export the toolchain bin dir so cargo-fmt and cargo-clippy are resolvable.
-      toolchainBin =
-        if cfg.toolchain != null then "${cfg.toolchain}/bin" else "${pkgs.cargo}/bin";
+      toolchainBin = if cfg.toolchain != null then "${cfg.toolchain}/bin" else "${pkgs.cargo}/bin";
 
-      preCommitHook = pkgs.writeShellScript "pre-commit-rust" ''
-        set -e
-        export PATH="${toolchainBin}:$PATH"
-        cargo fmt --check || { echo "  Run 'cargo fmt' to fix formatting"; exit 1; }
-        cargo clippy -- -D warnings
-      '';
     in
     {
       options.languages.rust = {
@@ -62,16 +54,8 @@ in
         };
 
         hooks = mkEnableOption ''
-          Nix-managed pre-commit hooks (fmt + clippy).
-
-          Hook scripts reference absolute Nix store paths — they work without the
-          devshell active. Installed only when the repo is explicitly trusted:
-
-            git config --local core.hooksPath .git/hooks   # enable  (alias: git trust)
-            git config --local --unset core.hooksPath      # disable (alias: git untrust)
-
-          This respects a global core.hooksPath=/dev/null security policy and avoids
-          any dependency on git-hooks.nix or pre-commit install.
+          Pre-commit hooks (cargo fmt + clippy) via git-hooks.nix.
+          Requires importing inputs.git-hooks.flakeModule in the consuming flake.
         '';
 
         formatters = mkEnableOption ''
@@ -111,7 +95,8 @@ in
                 if cfg.toolchain != null then
                   [ cfg.toolchain ]
                 else
-                  with pkgs; [
+                  with pkgs;
+                  [
                     rustc
                     cargo
                     rustfmt
@@ -140,38 +125,60 @@ in
               export CARGO_NET_GIT_FETCH_WITH_CLI=''${CARGO_NET_GIT_FETCH_WITH_CLI:-true}
               export CARGO_HTTP_MULTIPLEXING=''${CARGO_HTTP_MULTIPLEXING:-true}
               ${
-                if cfg.toolchain == null then ''
-                  export RUST_SRC_PATH=''${RUST_SRC_PATH:-${pkgs.rustPlatform.rustLibSrc}}
-                '' else ''
-                  export RUST_SRC_PATH=''${RUST_SRC_PATH:-${cfg.toolchain}/lib/rustlib/src/rust/library}
-                ''
+                if cfg.toolchain == null then
+                  ''
+                    export RUST_SRC_PATH=''${RUST_SRC_PATH:-${pkgs.rustPlatform.rustLibSrc}}
+                  ''
+                else
+                  ''
+                    export RUST_SRC_PATH=''${RUST_SRC_PATH:-${cfg.toolchain}/lib/rustlib/src/rust/library}
+                  ''
               }
 
               echo "Rust development environment loaded"
               echo "Rust:  $(rustc --version)"
               echo "Cargo: $(cargo --version)"
 
-              ${lib.optionalString cfg.hooks ''
-                # Install Nix-managed hooks when the repo is explicitly trusted.
-                # Trust:   git config --local core.hooksPath .git/hooks  (alias: git trust)
-                # Untrust: git config --local --unset core.hooksPath     (alias: git untrust)
-                if [ "$(git config --local core.hooksPath 2>/dev/null)" = ".git/hooks" ]; then
-                  mkdir -p .git/hooks
-                  ln -sf ${preCommitHook} .git/hooks/pre-commit
-                  echo "Hooks: pre-commit (fmt + clippy) installed"
-                else
-                  echo "Hooks: disabled — run 'git trust' to enable"
-                fi
-              ''}
             '';
           };
         }
 
+        (optionalAttrs hasPreCommit {
+          pre-commit.settings.hooks = mkIf cfg.hooks {
+            cargo-fmt = {
+              enable = true;
+              name = "cargo fmt";
+              entry = toString (
+                pkgs.writeShellScript "cargo-fmt-hook" ''
+                  export PATH="${toolchainBin}:$PATH"
+                  exec ${cargoBin} fmt --check
+                ''
+              );
+              language = "system";
+              types = [ "rust" ];
+              pass_filenames = false;
+            };
+            clippy = {
+              enable = true;
+              name = "clippy";
+              entry = toString (
+                pkgs.writeShellScript "clippy-hook" ''
+                  export PATH="${toolchainBin}:$PATH"
+                  exec ${cargoBin} clippy -- -D warnings
+                ''
+              );
+              language = "system";
+              types = [ "rust" ];
+              pass_filenames = false;
+            };
+          };
+        })
         (optionalAttrs hasTreefmt {
           treefmt.config = mkIf cfg.formatters {
             programs.rustfmt = {
               enable = true;
-            } // optionalAttrs (cfg.toolchain != null) {
+            }
+            // optionalAttrs (cfg.toolchain != null) {
               # Use the fenix toolchain's rustfmt rather than nixpkgs rustfmt,
               # so the formatter edition matches the compiler.
               package = cfg.toolchain;

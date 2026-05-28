@@ -20,6 +20,7 @@ in
     let
       cfg = config.languages.go;
       hasTreefmt = options ? treefmt;
+      hasPreCommit = options ? pre-commit;
 
       # gci v0.13.x is broken with Go 1.26 due to linkname checks; use v0.14.0
       goPkgs = pkgs.extend (
@@ -41,23 +42,6 @@ in
         }
       );
 
-      # Nix-managed hook script — absolute store paths, no PATH dependency.
-      # Symlinked into .git/hooks/ when the repo is explicitly trusted.
-      preCommitHook = pkgs.writeShellScript "pre-commit-go" ''
-        set -e
-        ROOT=$(git rev-parse --show-toplevel)
-        cd "$ROOT/${cfg.srcDir}"
-
-        unformatted=$(${goPkgs.gofumpt}/bin/gofumpt -l .)
-        if [ -n "$unformatted" ]; then
-          echo "Formatting issues:"
-          echo "$unformatted"
-          echo "  Run 'gofumpt -w .' to fix"
-          exit 1
-        fi
-
-        ${goPkgs.golangci-lint}/bin/golangci-lint run ./...
-      '';
     in
     {
       options.languages.go = {
@@ -78,20 +62,11 @@ in
           description = "Go path for module cache";
         };
 
-
         formatters = mkEnableOption "recommended treefmt formatters for Go";
 
         hooks = mkEnableOption ''
-          Nix-managed pre-commit hooks (gofumpt + golangci-lint).
-
-          Hook scripts reference absolute Nix store paths — they work without the
-          devshell active. Installed only when the repo is explicitly trusted:
-
-            git config --local core.hooksPath .git/hooks   # enable  (alias: git trust)
-            git config --local --unset core.hooksPath      # disable (alias: git untrust)
-
-          This respects a global core.hooksPath=/dev/null security policy and avoids
-          any dependency on git-hooks.nix or pre-commit install.
+          Pre-commit hooks (gofumpt + golangci-lint) via git-hooks.nix.
+          Requires importing inputs.git-hooks.flakeModule in the consuming flake.
         '';
 
         devShell = mkOption {
@@ -127,23 +102,6 @@ in
               echo "Go development environment loaded"
               echo "Go version: $(go version)"
               echo "GOPATH: $GOPATH"
-
-              ${lib.optionalString cfg.hooks ''
-                # Install Nix-managed hooks when the repo is explicitly trusted.
-                # Trust:   git config --local core.hooksPath .git/hooks  (alias: git trust)
-                # Untrust: git config --local --unset core.hooksPath     (alias: git untrust)
-                # Use the git root so the hook lands in the right .git/ even when
-                # the devshell is entered from a subdirectory (e.g. services/golang).
-                _GIT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null)
-                if [ -n "$_GIT_ROOT" ] && [ "$(git config --local core.hooksPath 2>/dev/null)" = ".git/hooks" ]; then
-                  mkdir -p "$_GIT_ROOT/.git/hooks"
-                  ln -sf ${preCommitHook} "$_GIT_ROOT/.git/hooks/pre-commit"
-                  echo "Hooks: pre-commit (gofumpt + golangci-lint) installed"
-                else
-                  echo "Hooks: disabled — run 'git trust' to enable"
-                fi
-                unset _GIT_ROOT
-              ''}
             '';
           };
         }
@@ -151,16 +109,45 @@ in
         # treefmt passes individual files; golangci-lint needs package scope.
         # Wrap it in a script that ignores the file args and runs ./... from srcDir.
         # golangci-lint --fix applies gofumpt + gci + golines in one pass.
+        (optionalAttrs hasPreCommit {
+          pre-commit.settings.hooks = mkIf cfg.hooks {
+            gofumpt = {
+              enable = true;
+              name = "gofumpt";
+              entry = "${goPkgs.gofumpt}/bin/gofumpt -l -w";
+              language = "system";
+              types = [ "go" ];
+            };
+            golangci-lint = {
+              enable = true;
+              name = "golangci-lint";
+              entry = toString (
+                pkgs.writeShellScript "golangci-lint-hook" ''
+                  export PATH="${goPkgs.go}/bin:$PATH"
+                  export CGO_ENABLED=0
+                  ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+                  cd "$ROOT/${cfg.srcDir}"
+                  exec ${goPkgs.golangci-lint}/bin/golangci-lint run ./...
+                ''
+              );
+              language = "system";
+              types = [ "go" ];
+              pass_filenames = false;
+            };
+          };
+        })
         (optionalAttrs hasTreefmt {
           treefmt.settings.formatter = mkIf cfg.formatters {
             golangci-lint = {
-              command = toString (pkgs.writeShellScript "golangci-lint-fmt" ''
-                export PATH="${goPkgs.go}/bin:$PATH"
-                export CGO_ENABLED=0
-                ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
-                cd "$ROOT/${cfg.srcDir}"
-                exec ${goPkgs.golangci-lint}/bin/golangci-lint run --fix ./...
-              '');
+              command = toString (
+                pkgs.writeShellScript "golangci-lint-fmt" ''
+                  export PATH="${goPkgs.go}/bin:$PATH"
+                  export CGO_ENABLED=0
+                  ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+                  cd "$ROOT/${cfg.srcDir}"
+                  exec ${goPkgs.golangci-lint}/bin/golangci-lint run --fix ./...
+                ''
+              );
               options = [ ];
               includes = [ "*.go" ];
             };
