@@ -155,7 +155,6 @@ in
 
         (optionalAttrs hasTreefmt {
           treefmt.config = mkIf cfg.formatters {
-            projectRootFile = lib.mkDefault "Cargo.toml";
             programs.rustfmt = {
               enable = true;
             } // optionalAttrs (cfg.toolchain != null) {
