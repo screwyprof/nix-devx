@@ -6,6 +6,7 @@ let
     mkMerge
     mkOption
     optionalAttrs
+    optionals
     types
     ;
 in
@@ -25,136 +26,101 @@ in
       options.languages.rust = {
         enable = mkEnableOption "Rust language tooling";
 
-        cargoHome = mkOption {
-          type = types.nullOr types.str;
-          default = null;
-          description = "Cargo home directory (null for per-project directory)";
-        };
-
         toolchain = mkOption {
           type = types.nullOr types.package;
           default = null;
-          description = "Rust toolchain package (null for default rustc)";
+          description = ''
+            Rust toolchain package. null → nixpkgs stable (rustc, cargo, rustfmt, clippy, rust-analyzer).
+
+            Typical fenix usage — stable with specific components and a cross target:
+              inputs.fenix.packages.''${system}.combine [
+                (inputs.fenix.packages.''${system}.stable.withComponents
+                  [ "rustc" "cargo" "rustfmt" "clippy" "rust-src" "rust-analyzer" "llvm-tools" ])
+                inputs.fenix.packages.''${system}.targets."wasm32-unknown-unknown".stable.rust-std
+              ]
+
+            To switch channel, replace "stable" with "nightly" in both places.
+            Pinned by fenix's flake.lock — no per-release sha256 required.
+          '';
         };
 
-        hooks = mkEnableOption "recommended git hooks for Rust";
+        hooks = mkEnableOption "recommended git hooks (rustfmt, cargo-check, clippy)";
+
+        coverage = mkOption {
+          type = types.bool;
+          default = true;
+          description = ''
+            Include cargo-llvm-cov and lcov for code coverage.
+
+            cargo-llvm-cov calls llvm-profdata/llvm-cov from the Rust toolchain sysroot,
+            so the LLVM version in the toolchain must match the compiler.
+
+            With the nixpkgs default toolchain this is always satisfied.
+            With a fenix toolchain, include the llvm-tools component:
+              inputs.fenix.packages.''${system}.stable.withComponents
+                [ "rustc" "cargo" "rustfmt" "clippy" "rust-src" "rust-analyzer" "llvm-tools" ]
+          '';
+        };
 
         devShell = mkOption {
           type = types.package;
           readOnly = true;
-          description = "Rust development shell";
+          description = "Rust development shell, composable via inputsFrom";
         };
       };
 
       config = mkIf cfg.enable (mkMerge [
         {
-          # Self-contained Rust devShell
           languages.rust.devShell = pkgs.mkShellNoCC {
             nativeBuildInputs =
               (
                 if cfg.toolchain != null then
                   [ cfg.toolchain ]
                 else
-                  [
-                    pkgs.rustc
-                    pkgs.rust-analyzer
-                    pkgs.rustfmt
-                    pkgs.cargo
+                  with pkgs; [
+                    rustc
+                    cargo
+                    rustfmt
+                    clippy
+                    rust-analyzer
                   ]
               )
-              ++ (with pkgs; [
-                # Cargo extensions
-                bacon
-                cargo-edit
-                cargo-audit
-                cargo-binutils
-                cargo-nextest
-                cargo-watch
+              ++ [
+                pkgs.bacon
+                pkgs.cargo-edit
+                pkgs.cargo-audit
+                pkgs.cargo-nextest
+                pkgs.cargo-watch
+              ]
+              ++ optionals cfg.coverage [
+                pkgs.cargo-llvm-cov
+                pkgs.lcov
+              ];
 
-                # Coverage tools
-                lcov
-
-                # Linters
-                clippy
-                checkmake
-              ]);
-
-            # Environment variables
-            #TODO: this doesn't work when included in external flakes
-            RUST_BACKTRACE = "full";
-            CARGO_NET_GIT_FETCH_WITH_CLI = "true";
-            CARGO_HTTP_MULTIPLEXING = "true";
-            RUST_SRC_PATH = "${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}";
-
-            # Shell initialization
             shellHook = ''
-              # Project root & stable hash
-              PROJECT_ROOT=''${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}
-              PROJECT_HASH=''${PROJECT_HASH:-$(printf '%s\n' "$PROJECT_ROOT" | shasum -a 256 | cut -c1-8)}
-
-              # Project-specific cargo directory (state/cache data)
+              # All env vars exported here — top-level Nix attrs are NOT propagated
+              # through inputsFrom, so this is the only reliable place to set them.
+              export RUST_BACKTRACE=''${RUST_BACKTRACE:-full}
+              export CARGO_NET_GIT_FETCH_WITH_CLI=''${CARGO_NET_GIT_FETCH_WITH_CLI:-true}
+              export CARGO_HTTP_MULTIPLEXING=''${CARGO_HTTP_MULTIPLEXING:-true}
               ${
-                if cfg.cargoHome != null then
-                  ''
-                    # Use custom CARGO_HOME
-                    export CARGO_HOME=''${CARGO_HOME:-${cfg.cargoHome}}
-                  ''
-                else
-                  ''
-                    # Use per-project CARGO_HOME with project hash
-                    export CARGO_HOME=''${CARGO_HOME:-''${XDG_STATE_HOME:-$HOME/.local/state}/cargo-$PROJECT_HASH}
-                  ''
+                if cfg.toolchain == null then ''
+                  export RUST_SRC_PATH=''${RUST_SRC_PATH:-${pkgs.rustPlatform.rustLibSrc}}
+                '' else ''
+                  export RUST_SRC_PATH=''${RUST_SRC_PATH:-${cfg.toolchain}/lib/rustlib/src/rust/library}
+                ''
               }
-              export CARGO_TARGET_DIR="$CARGO_HOME/target"
-              export PATH="$CARGO_HOME/bin:$PATH"
-              export RUST_BACKTRACE = "full";
-              export CARGO_NET_GIT_FETCH_WITH_CLI = "true";
-              export CARGO_HTTP_MULTIPLEXIN = "true";
-              export RUST_SRC_PATH="${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}"
-
-              # Create directories
-              mkdir -p "$CARGO_HOME/bin"
 
               echo "Rust development environment loaded"
-              echo "Rust version: $(rustc --version)"
-              echo "Cargo version: $(cargo --version)"
-              echo "CARGO_HOME: $CARGO_HOME"
-              echo "Project root: $PROJECT_ROOT"
-              echo "Project hash: $PROJECT_HASH"
-
-              # Check if project has its own toolchain
-              if [[ -f "rust-toolchain.toml" ]]; then
-                echo "Project toolchain detected:"
-                if grep -q "channel" rust-toolchain.toml; then
-                  CHANNEL=$(grep "channel" rust-toolchain.toml | cut -d= -f2 | tr -d ' "')
-                  echo "   Channel: $CHANNEL"
-                fi
-                if grep -q "version" rust-toolchain.toml; then
-                  VERSION=$(grep "version" rust-toolchain.toml | cut -d= -f2 | tr -d ' "')
-                  echo "   Version: $VERSION"
-                fi
-                echo "   To use project toolchain: rustup toolchain install $(grep -o 'channel.*' rust-toolchain.toml | cut -d= -f2 | tr -d ' "')"
-              fi
-
-              # Install cargo-llvm-cov if not available (cached check)
-              CARGO_LLVM_COV_MARKER="$CARGO_HOME/.cargo-llvm-cov-installed"
-              if [[ ! -f "$CARGO_LLVM_COV_MARKER" ]]; then
-                echo "Installing cargo-llvm-cov..."
-                cargo install cargo-llvm-cov --quiet && touch "$CARGO_LLVM_COV_MARKER"
-              fi
-
-              # Show useful tools
-              echo ""
-              echo "Available tools:"
-              echo "  bacon          - cargo check runner"
-              echo "  cargo-nextest  - next-gen test runner"
-              echo "  cargo-llvm-cov - code coverage"
-              echo "  cargo-audit    - security audit"
+              echo "Rust:  $(rustc --version)"
+              echo "Cargo: $(cargo --version)"
             '';
           };
         }
         (optionalAttrs hasPreCommit {
-          # Configure git hooks (only if hooks.enable is true AND pre-commit module is loaded)
+          # pre-commit.settings.src must be set by the consumer to the Rust source root.
+          # For a single-crate project: inputs.nix-filter.lib.filter { root = ./.; ... }
+          # For a workspace subdirectory: adjust root to the crate or workspace path.
           pre-commit.settings.hooks = mkIf cfg.hooks {
             rustfmt.enable = true;
             cargo-check.enable = true;
