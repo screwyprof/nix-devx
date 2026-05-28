@@ -9,6 +9,7 @@
   imports = [
     # nix-devx modules (imported by path)
     ../modules/languages/nix.nix
+    ../modules/languages/rust-fenix.nix
     ../modules/ai/claude.nix
 
     # Dev-only external modules
@@ -28,6 +29,9 @@
     {
       # Enable Nix language for this repository
       languages.nix.enable = true;
+
+      # Enable rust-fenix module for testing
+      languages."rust-fenix".enable = true;
 
       # Enable recommended git hooks for Nix
       languages.nix.hooks = true;
@@ -119,6 +123,17 @@
           echo ""
           echo "Running in unrestricted mode (trusted container environment)"
           echo ""
+        '';
+      };
+
+      # Direct shell — verifies tools, env vars, and PROJECT_ROOT detection
+      devShells."rust-fenix-test" = config.languages."rust-fenix".devShell;
+
+      # Nested shell — verifies env vars propagate through inputsFrom
+      devShells."rust-fenix-nested" = pkgs.mkShellNoCC {
+        inputsFrom = [ config.languages."rust-fenix".devShell ];
+        shellHook = ''
+          echo "Nested Rust shell (inputsFrom propagation test)"
         '';
       };
     };
