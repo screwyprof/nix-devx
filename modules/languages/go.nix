@@ -138,6 +138,11 @@ in
         })
         (optionalAttrs hasTreefmt {
           treefmt.settings.formatter = mkIf cfg.formatters {
+            gofumpt = {
+              command = "${goPkgs.gofumpt}/bin/gofumpt";
+              options = [ "-w" ];
+              includes = [ "*.go" ];
+            };
             golangci-lint = {
               command = toString (
                 pkgs.writeShellScript "golangci-lint-fmt" ''
