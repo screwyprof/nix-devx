@@ -79,6 +79,12 @@ in
           Requires importing inputs.treefmt-nix.flakeModule in the consuming flake.
         '';
 
+        cargoHome = mkOption {
+          type = types.str;
+          default = "\${XDG_DATA_HOME:-$HOME/.local/share}/cargo";
+          description = "Cargo home directory (registry cache, credentials, installed binaries)";
+        };
+
         coverage = mkOption {
           type = types.bool;
           default = true;
@@ -128,6 +134,8 @@ in
             shellHook = ''
               # All env vars exported here — top-level Nix attrs are NOT propagated
               # through inputsFrom, so this is the only reliable place to set them.
+              export CARGO_HOME=''${CARGO_HOME:-${cfg.cargoHome}}
+              mkdir -p "$CARGO_HOME"
               export RUST_BACKTRACE=''${RUST_BACKTRACE:-full}
               export CARGO_NET_GIT_FETCH_WITH_CLI=''${CARGO_NET_GIT_FETCH_WITH_CLI:-true}
               export CARGO_HTTP_MULTIPLEXING=''${CARGO_HTTP_MULTIPLEXING:-true}
