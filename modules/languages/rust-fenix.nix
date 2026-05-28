@@ -32,13 +32,15 @@ in
           description = ''
             Rust toolchain package. null → nixpkgs stable (rustc, cargo, rustfmt, clippy, rust-analyzer).
 
-            For stable/nightly switching, pass a fenix toolchain:
-              inputs.fenix.packages.''${system}.stable.toolchain
-              inputs.fenix.packages.''${system}.nightly.toolchain
-              inputs.fenix.packages.''${system}.fromToolchainFile ./rust-toolchain.toml pkgs.lib
+            Typical fenix usage — stable with specific components and a cross target:
+              inputs.fenix.packages.''${system}.combine [
+                (inputs.fenix.packages.''${system}.stable.withComponents
+                  [ "rustc" "cargo" "rustfmt" "clippy" "rust-src" "rust-analyzer" "llvm-tools" ])
+                inputs.fenix.packages.''${system}.targets."wasm32-unknown-unknown".stable.rust-std
+              ]
 
-            For IDE support (RUST_SRC_PATH), include the rust-src component:
-              inputs.fenix.packages.''${system}.stable.withComponents [ "rustc" "cargo" "rustfmt" "clippy" "rust-src" "rust-analyzer" ]
+            To switch channel, replace "stable" with "nightly" in both places.
+            Pinned by fenix's flake.lock — no per-release sha256 required.
           '';
         };
 
