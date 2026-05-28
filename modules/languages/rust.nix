@@ -20,7 +20,18 @@ in
     }:
     let
       cfg = config.languages.rust;
-      hasPreCommit = options ? pre-commit;
+      hasTreefmt = options ? treefmt;
+
+      # Nix-managed hook script — absolute store paths, no PATH dependency.
+      # Symlinked into .git/hooks/ when the repo is explicitly trusted.
+      cargoBin =
+        if cfg.toolchain != null then "${cfg.toolchain}/bin/cargo" else "${pkgs.cargo}/bin/cargo";
+
+      preCommitHook = pkgs.writeShellScript "pre-commit-rust" ''
+        set -e
+        ${cargoBin} fmt --check || { echo "  Run 'cargo fmt' to fix formatting"; exit 1; }
+        ${cargoBin} clippy -- -D warnings
+      '';
     in
     {
       options.languages.rust = {
@@ -44,7 +55,23 @@ in
           '';
         };
 
-        hooks = mkEnableOption "recommended git hooks (rustfmt, cargo-check, clippy)";
+        hooks = mkEnableOption ''
+          Nix-managed pre-commit hooks (fmt + clippy).
+
+          Hook scripts reference absolute Nix store paths — they work without the
+          devshell active. Installed only when the repo is explicitly trusted:
+
+            git config --local core.hooksPath .git/hooks   # enable  (alias: git trust)
+            git config --local --unset core.hooksPath      # disable (alias: git untrust)
+
+          This respects a global core.hooksPath=/dev/null security policy and avoids
+          any dependency on git-hooks.nix or pre-commit install.
+        '';
+
+        formatters = mkEnableOption ''
+          nix fmt integration via treefmt (rustfmt).
+          Requires importing inputs.treefmt-nix.flakeModule in the consuming flake.
+        '';
 
         coverage = mkOption {
           type = types.bool;
@@ -52,13 +79,8 @@ in
           description = ''
             Include cargo-llvm-cov and lcov for code coverage.
 
-            cargo-llvm-cov calls llvm-profdata/llvm-cov from the Rust toolchain sysroot,
-            so the LLVM version in the toolchain must match the compiler.
-
-            With the nixpkgs default toolchain this is always satisfied.
-            With a fenix toolchain, include the llvm-tools component:
-              inputs.fenix.packages.''${system}.stable.withComponents
-                [ "rustc" "cargo" "rustfmt" "clippy" "rust-src" "rust-analyzer" "llvm-tools" ]
+            cargo-llvm-cov requires matching LLVM versions between the profiler tools
+            and the compiler. With a fenix toolchain, include the llvm-tools component.
           '';
         };
 
@@ -114,17 +136,33 @@ in
               echo "Rust development environment loaded"
               echo "Rust:  $(rustc --version)"
               echo "Cargo: $(cargo --version)"
+
+              ${lib.optionalString cfg.hooks ''
+                # Install Nix-managed hooks when the repo is explicitly trusted.
+                # Trust:   git config --local core.hooksPath .git/hooks  (alias: git trust)
+                # Untrust: git config --local --unset core.hooksPath     (alias: git untrust)
+                if [ "$(git config --local core.hooksPath 2>/dev/null)" = ".git/hooks" ]; then
+                  mkdir -p .git/hooks
+                  ln -sf ${preCommitHook} .git/hooks/pre-commit
+                  echo "Hooks: pre-commit (fmt + clippy) installed"
+                else
+                  echo "Hooks: disabled — run 'git trust' to enable"
+                fi
+              ''}
             '';
           };
         }
-        (optionalAttrs hasPreCommit {
-          # pre-commit.settings.src must be set by the consumer to the Rust source root.
-          # For a single-crate project: inputs.nix-filter.lib.filter { root = ./.; ... }
-          # For a workspace subdirectory: adjust root to the crate or workspace path.
-          pre-commit.settings.hooks = mkIf cfg.hooks {
-            rustfmt.enable = true;
-            cargo-check.enable = true;
-            clippy.enable = true;
+
+        (optionalAttrs hasTreefmt {
+          treefmt.config = mkIf cfg.formatters {
+            projectRootFile = lib.mkDefault "Cargo.toml";
+            programs.rustfmt = {
+              enable = true;
+            } // optionalAttrs (cfg.toolchain != null) {
+              # Use the fenix toolchain's rustfmt rather than nixpkgs rustfmt,
+              # so the formatter edition matches the compiler.
+              package = cfg.toolchain;
+            };
           };
         })
       ]);
