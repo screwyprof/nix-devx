@@ -137,7 +137,4 @@
         '';
       };
     };
-
-  flake.config.config = config;
-  flake.options.mySystem = lib.mkOption { default = config.allSystems.${builtins.currentSystem}; };
 }
