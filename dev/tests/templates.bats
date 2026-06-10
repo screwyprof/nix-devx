@@ -72,7 +72,7 @@ teardown() {
   run nix flake init -t "$FLAKE_ROOT#nix"
   run nix flake lock
   
-  nix develop --command statix --version
+  nix develop --command statix --help
   nix develop --command deadnix --version
   run nix develop --command true
 
@@ -92,7 +92,7 @@ teardown() {
   nix develop --command go version
   nix develop --command golangci-lint version
   nix develop --command claude --version
-  nix develop --command statix --version
+  nix develop --command statix --help
 
   run nix build
   assert_success

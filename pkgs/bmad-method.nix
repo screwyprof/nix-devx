@@ -3,23 +3,23 @@
   buildNpmPackage,
   fetchFromGitHub,
   makeWrapper,
-  nodejs_20,
+  nodejs_22,
 }:
 
 buildNpmPackage rec {
   pname = "bmad-method";
-  version = "6.2.1";
+  version = "6.8.0";
 
   src = fetchFromGitHub {
     owner = "bmad-code-org";
     repo = "BMAD-METHOD";
-    rev = "fce9d6c0c8ad893f88af9dea69cfcbc8f9f79896";
-    hash = "sha256-I2Ko58t5/Zqoy/w4aTE4wat5boOy0BwURq0J0ZPm+q8=";
+    rev = "3bcd6c3cce6e381b759e23185b099081496567a5";
+    hash = "sha256-lEMUaIFHuFvcqTEMIH95pB4Bmnuq6N5J8LCHHiRnv1A=";
   };
 
-  npmDepsHash = "sha256-KEmCJMH2aWepRgp07Vg7OZKuP2mrDxlJ5PPLwTdI9NY=";
+  npmDepsHash = "sha256-VM2ICB1LxHh2l5iIeKzMOyWm1qoAKMPfxCUMGTBtX/g=";
 
-  nodejs = nodejs_20;
+  nodejs = nodejs_22;
 
   dontNpmBuild = true;
   npmPrune = false;
@@ -29,12 +29,12 @@ buildNpmPackage rec {
   postInstall = ''
     wrapProgram $out/bin/bmad-method \
       --set NODE_PATH "$out/lib/node_modules/bmad-method" \
-      --prefix PATH : ${lib.makeBinPath [ nodejs_20 ]}
+      --prefix PATH : ${lib.makeBinPath [ nodejs_22 ]}
 
     if [ -f "$out/bin/bmad" ]; then
       wrapProgram $out/bin/bmad \
         --set NODE_PATH "$out/lib/node_modules/bmad-method" \
-        --prefix PATH : ${lib.makeBinPath [ nodejs_20 ]}
+        --prefix PATH : ${lib.makeBinPath [ nodejs_22 ]}
     fi
   '';
 
