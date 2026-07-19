@@ -183,6 +183,15 @@ in
         # Create config directory
         mkdir -p "$CLAUDE_CONFIG_DIR"
 
+        # Skip Claude's first-run onboarding/login wizard on a fresh config dir. `hasCompletedOnboarding`
+        # is MUTABLE state Claude keeps in $CLAUDE_CONFIG_DIR/.claude.json (not policy — no env var or
+        # settings key flips it), so seed it CREATE-IF-ABSENT: never clobber a real config, and the OAuth
+        # token still does the actual auth (auth != onboarding). Homes the seed WITH the claude tooling so
+        # a project that enables ai.claude gets a wizard-free `claude` without any host/cage-side state.
+        if [ ! -e "$CLAUDE_CONFIG_DIR/.claude.json" ]; then
+          printf '%s\n' '{"hasCompletedOnboarding":true}' > "$CLAUDE_CONFIG_DIR/.claude.json"
+        fi
+
         echo "🤖 Claude Code Development Environment loaded"
         echo "======================================"
         echo "Claude version: $(claude -v 2>/dev/null || echo unknown)"
