@@ -8,7 +8,7 @@ help: ## Show this help message
 
 test: ## Run integration tests (requires bats)
 	@command -v bats >/dev/null || { echo "bats not found. Install with: nix-shell -p bats"; exit 1; }
-	bats dev/tests/templates.bats
+	bats dev/tests/
 
 fmt: ## Format all Nix files
 	nix fmt

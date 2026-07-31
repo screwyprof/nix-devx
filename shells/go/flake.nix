@@ -19,7 +19,12 @@
     flake-parts.lib.mkFlake { inherit inputs; } (
       { lib, ... }:
       {
-        imports = [ nix-devx.flakeModules.languages-go ];
+        imports = [
+          nix-devx.flakeModules.languages-go
+          # The EDITOR half of the same template. Inert unless a consumer asks for it: enabling a
+          # language yields a toolchain, and the extensions are only materialised below.
+          nix-devx.flakeModules.editors-vscode
+        ];
 
         systems = lib.systems.flakeExposed;
 
@@ -27,6 +32,13 @@
           { config, pkgs, ... }:
           {
             languages.go.enable = true;
+
+            # The template's editor half, materialised in the layout a devbox cage consumes
+            # (`share/vscode/extensions/<id>`). A project composes this with its own base set.
+            packages.vscodeExtensions = pkgs.buildEnv {
+              name = "go-vscode-extensions";
+              paths = config.editors.vscode.extensions;
+            };
 
             devShells.default = pkgs.mkShellNoCC {
               inputsFrom = [ config.languages.go.devShell ];
