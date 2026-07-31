@@ -1,7 +1,7 @@
 { lib, flake-parts-lib, ... }:
 let
   inherit (lib)
-    concatLists
+    concatMap
     mkOption
     optionals
     types
@@ -50,8 +50,8 @@ in
         };
       };
 
-      config.editors.vscode.extensions = concatLists (
-        map (name: optionals (enabled name) sets.${name}) (builtins.attrNames sets)
+      config.editors.vscode.extensions = concatMap (name: optionals (enabled name) sets.${name}) (
+        builtins.attrNames sets
       );
     }
   );
