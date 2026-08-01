@@ -33,14 +33,26 @@ in
       # question being asked: is this language enabled, if it is even present?
       enabled = name: config.languages.${name}.enable or false;
       sets = import ./_vscode-sets.nix pkgs;
+      cfg = config.editors.vscode;
     in
     {
       options.editors.vscode = {
+        direnv.enable = mkOption {
+          type = types.bool;
+          # Off fails silently: language extensions with no devShell behind them, which surfaces as
+          # "cargo: No such file or directory". On is at worst one inert extension.
+          default = true;
+          description = ''
+            Include `mkhl.direnv`, which loads this devShell into the extension host.
+            Turn off when the shell reaches the editor another way.
+          '';
+        };
+
         extensions = mkOption {
           type = types.listOf types.package;
           readOnly = true;
           description = ''
-            VS Code extensions implied by the languages enabled in this shell.
+            VS Code extensions implied by the languages enabled in this shell, plus direnv.
 
             READ-ONLY and inert: enabling a language yields a toolchain, never an installed extension.
             A consumer opts in explicitly (a devbox session flake composes this into its declared set),
@@ -50,9 +62,12 @@ in
         };
       };
 
-      config.editors.vscode.extensions = concatMap (name: optionals (enabled name) sets.${name}) (
-        builtins.attrNames sets
-      );
+      # mkhl.direnv loads the devShell into the extension host; without it the language
+      # extensions below have no binaries.
+      config.editors.vscode.extensions =
+        optionals cfg.direnv.enable [ pkgs.vscode-extensions.mkhl.direnv ]
+        ++ optionals (config.ai.claude.enable or false) [ pkgs.vscode-extensions.anthropic.claude-code ]
+        ++ concatMap (name: optionals (enabled name) sets.${name}) (builtins.attrNames sets);
     }
   );
 }
