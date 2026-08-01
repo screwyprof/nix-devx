@@ -33,9 +33,27 @@ in
       # question being asked: is this language enabled, if it is even present?
       enabled = name: config.languages.${name}.enable or false;
       sets = import ./_vscode-sets.nix pkgs;
+      cfg = config.editors.vscode;
     in
     {
       options.editors.vscode = {
+        direnv.enable = mkOption {
+          type = types.bool;
+          default = true;
+          description = ''
+            Include `mkhl.direnv`, the rail that puts this devShell into the extension host.
+
+            Defaults ON because the failure modes are asymmetric: forgetting to enable it fails
+            UNSAFE — the editor gets language extensions whose binaries live in a devShell it never
+            loaded, which surfaces as `cargo: No such file or directory` rather than as an error
+            about extensions. Forgetting to disable it fails SAFE: one inert extension.
+
+            Turn it OFF when something else already delivers the shell to the editor — e.g. a remote
+            session whose login command sources the devShell for the whole server process tree, where
+            this extension would be redundant.
+          '';
+        };
+
         extensions = mkOption {
           type = types.listOf types.package;
           readOnly = true;
@@ -57,13 +75,12 @@ in
       # rust-analyzer reporting `cargo: No such file or directory` in a project whose shell provides cargo.
       # It lives here rather than in the language table because it pairs with the SHELL, not with any one
       # language — and here it is paid for only by consumers that asked for an editor.
-      config.editors.vscode.extensions = [
-        pkgs.vscode-extensions.mkhl.direnv
-      ]
-      # Pairs with the TOOL, exactly as rust-analyzer pairs with the rust toolchain: a shell that
-      # enables ai.claude gets the editor half; one that does not has it ABSENT, not disabled.
-      ++ optionals (config.ai.claude.enable or false) [ pkgs.vscode-extensions.anthropic.claude-code ]
-      ++ concatMap (name: optionals (enabled name) sets.${name}) (builtins.attrNames sets);
+      config.editors.vscode.extensions =
+        optionals cfg.direnv.enable [ pkgs.vscode-extensions.mkhl.direnv ]
+        # Pairs with the TOOL, exactly as rust-analyzer pairs with the rust toolchain: a shell that
+        # enables ai.claude gets the editor half; one that does not has it ABSENT, not disabled.
+        ++ optionals (config.ai.claude.enable or false) [ pkgs.vscode-extensions.anthropic.claude-code ]
+        ++ concatMap (name: optionals (enabled name) sets.${name}) (builtins.attrNames sets);
     }
   );
 }
