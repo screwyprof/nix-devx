@@ -39,18 +39,12 @@ in
       options.editors.vscode = {
         direnv.enable = mkOption {
           type = types.bool;
+          # Off fails silently: language extensions with no devShell behind them, which surfaces as
+          # "cargo: No such file or directory". On is at worst one inert extension.
           default = true;
           description = ''
-            Include `mkhl.direnv`, the rail that puts this devShell into the extension host.
-
-            Defaults ON because the failure modes are asymmetric: forgetting to enable it fails
-            UNSAFE — the editor gets language extensions whose binaries live in a devShell it never
-            loaded, which surfaces as `cargo: No such file or directory` rather than as an error
-            about extensions. Forgetting to disable it fails SAFE: one inert extension.
-
-            Turn it OFF when something else already delivers the shell to the editor — e.g. a remote
-            session whose login command sources the devShell for the whole server process tree, where
-            this extension would be redundant.
+            Include `mkhl.direnv`, which loads this devShell into the extension host.
+            Turn off when the shell reaches the editor another way.
           '';
         };
 
@@ -58,8 +52,7 @@ in
           type = types.listOf types.package;
           readOnly = true;
           description = ''
-            VS Code extensions implied by the languages enabled in this shell, plus the
-            editor core (direnv) that makes any of them functional.
+            VS Code extensions implied by the languages enabled in this shell, plus direnv.
 
             READ-ONLY and inert: enabling a language yields a toolchain, never an installed extension.
             A consumer opts in explicitly (a devbox session flake composes this into its declared set),
@@ -69,16 +62,10 @@ in
         };
       };
 
-      # The RAIL, not taste. mkhl.direnv calls `updateProcessEnv`, mutating the extension host's own
-      # environment, so every language extension below inherits the devShell this flake defines. Without
-      # it they are thin clients with nothing behind them: measured 2026-08-01, a language-only set left
-      # rust-analyzer reporting `cargo: No such file or directory` in a project whose shell provides cargo.
-      # It lives here rather than in the language table because it pairs with the SHELL, not with any one
-      # language — and here it is paid for only by consumers that asked for an editor.
+      # mkhl.direnv loads the devShell into the extension host; without it the language
+      # extensions below have no binaries.
       config.editors.vscode.extensions =
         optionals cfg.direnv.enable [ pkgs.vscode-extensions.mkhl.direnv ]
-        # Pairs with the TOOL, exactly as rust-analyzer pairs with the rust toolchain: a shell that
-        # enables ai.claude gets the editor half; one that does not has it ABSENT, not disabled.
         ++ optionals (config.ai.claude.enable or false) [ pkgs.vscode-extensions.anthropic.claude-code ]
         ++ concatMap (name: optionals (enabled name) sets.${name}) (builtins.attrNames sets);
     }
