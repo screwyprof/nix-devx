@@ -12,7 +12,7 @@ nix flake init -t github:screwyprof/nix-devx#claude
 
 - Claude Code with configurable wrapper
 - MCP servers (memory, sequential-thinking)
-- Global config directory (~/.claude) with opt-in per-project isolation
+- Claude's own global config directory (~/.claude), overridable per project via `CLAUDE_CONFIG_DIR`
 - MCP servers included in devShell
 
 ## After Init
@@ -22,15 +22,19 @@ nix flake init -t github:screwyprof/nix-devx#claude
 
 ## Configuration
 
-### Per-Project Isolation (Advanced)
+### Per-Project Config Directory
 
-By default, Claude uses a global config directory at `~/.claude` for compatibility with VS Code extensions and other tools. To enable per-project isolation:
+By default Claude uses its own global config directory at `~/.claude`, which is what VS Code extensions
+and other tools expect. To give a project its own, export `CLAUDE_CONFIG_DIR` — a project's `.envrc` is
+the natural place:
 
-```nix
-perSystem.ai.claude.enableProjectIsolation = true;
+```sh
+export CLAUDE_CONFIG_DIR="$HOME/.local/state/claude/my-project"
 ```
 
-This creates isolated config directories at `~/.local/state/claude/<project-hash>` for each project.
+The shell writes nothing unless that variable is set, so entering it never seeds state into an
+unmanaged home. When it IS set, the directory is created and Claude's first-run onboarding is skipped
+(create-if-absent — an existing config is never overwritten).
 
 ## Host vs Container
 

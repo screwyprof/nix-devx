@@ -122,7 +122,7 @@
           '';
         };
 
-        # Direct shell — verifies tools, env vars, and PROJECT_ROOT detection
+        # Direct shell — verifies tools and env vars
         "rust-test" = config.languages.rust.devShell;
 
         # Nested shell — verifies env vars propagate through inputsFrom
