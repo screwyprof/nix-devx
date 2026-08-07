@@ -79,17 +79,21 @@ nix-devx provides flake-parts modules for development environments.
 |--------|------|---------|-------------|
 | `enable` | bool | false | Enable Claude Code |
 | `dangerouslySkipPermissions` | bool | false | Skip permission checks |
-| `baseUrl` | str | `https://api.anthropic.com` | API base URL |
-| `models.default` | str | `claude-sonnet-4-20250514` | Default model |
-| `configDir` | nullOr str | null | Config directory (defaults to ~/.claude globally) |
-| `enableProjectIsolation` | bool | false | Enable per-project config isolation (advanced users only) |
 
 **Provides:**
 - `packages.claude-wrapper`
 - `ai.claude.devShell` - respects `dangerouslySkipPermissions`
 - `ai.claude.devShellUnrestricted` - always skips permissions
 
-**Note:** Claude Code requires `allowUnfree = true`. Telemetry is disabled by default.
+**Config directory:** set `CLAUDE_CONFIG_DIR` in the environment (a project's `.envrc` is the usual
+place). The module does not set it — unset means Claude uses its own `~/.claude`. It also writes
+nothing unless that variable is set, so entering the shell never seeds state in an unmanaged home.
+
+**Telemetry** is disabled unconditionally: Claude reads these flags as set-or-not, so a value of `0`
+would turn the behaviour ON rather than off, and there is no way to express "off" other than omitting
+the variable. They are therefore not configurable.
+
+**Note:** Claude Code requires `allowUnfree = true`.
 
 See [devcontainer.md](devcontainer.md) for host vs container setup with unrestricted mode.
 
