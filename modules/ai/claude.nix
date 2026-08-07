@@ -31,21 +31,30 @@ let
     export CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1
     export CLAUDE_CODE_IDE_SKIP_AUTO_INSTALL=1
 
-    claude_config_dir=''${CLAUDE_CONFIG_DIR:-$HOME/.claude}
-    mkdir -p "$claude_config_dir"
+    # WRITES ONLY WHERE IT HAS BEEN TOLD TO. Entering a devShell must not create or seed state in the
+    # user's real home — before this, an unset CLAUDE_CONFIG_DIR defaulted to `$HOME/.claude` and the
+    # hook did `mkdir -p` + wrote `.claude.json` there, so merely entering the shell side-effected the
+    # workstation's home. Seeding is for a config dir the CONSUMER pointed somewhere deliberate (devbox
+    # sets it per project); with it unset, Claude uses its own `~/.claude` and runs its own onboarding,
+    # which is the user's business and not a shell hook's.
+    if [ -n "''${CLAUDE_CONFIG_DIR:-}" ]; then
+      mkdir -p "$CLAUDE_CONFIG_DIR"
 
-    # Skip Claude's first-run onboarding/login wizard on a fresh config dir. `hasCompletedOnboarding`
-    # is MUTABLE state Claude keeps in .claude.json (not policy — no env var or settings key flips it),
-    # so seed it CREATE-IF-ABSENT: never clobber a real config, and the OAuth token still does the
-    # actual auth (auth != onboarding).
-    if [ ! -e "$claude_config_dir/.claude.json" ]; then
-      printf '%s\n' '{"hasCompletedOnboarding":true}' > "$claude_config_dir/.claude.json"
+      # Skip Claude's first-run onboarding/login wizard on a fresh config dir. `hasCompletedOnboarding`
+      # is MUTABLE state Claude keeps in .claude.json (not policy — no env var or settings key flips
+      # it), so seed it CREATE-IF-ABSENT: never clobber a real config, and the OAuth token still does
+      # the actual auth (auth != onboarding).
+      if [ ! -e "$CLAUDE_CONFIG_DIR/.claude.json" ]; then
+        printf '%s\n' '{"hasCompletedOnboarding":true}' > "$CLAUDE_CONFIG_DIR/.claude.json"
+      fi
     fi
 
     echo "🤖 Claude Code Development Environment loaded"
     echo "======================================"
     echo "Claude version: $(claude -v 2>/dev/null || echo unknown)"
-    echo "CLAUDE_CONFIG_DIR: $claude_config_dir"
+    # No apostrophe in the fallback: inside `''${VAR:-word}` a lone `'` opens a quote bash never closes,
+    # and the whole hook dies with "unexpected EOF while looking for matching `'`".
+    echo "CLAUDE_CONFIG_DIR: ''${CLAUDE_CONFIG_DIR:-(unset, Claude uses its own default)}"
     echo ""
   '';
 in
