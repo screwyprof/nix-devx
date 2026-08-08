@@ -87,3 +87,40 @@ PY
   "
   assert_success
 }
+
+# The HOME FRAGMENT: the same packaged dir, wrapped as a home-manager module a consumer can be extended
+# with. Asserted against the packaging above rather than restated, because the two drifting apart is the
+# failure this pairing exists to prevent.
+eval_fragment_source() {
+  nix eval --raw --impure --expr "
+    let
+      f = builtins.getFlake \"git+file://$FLAKE_ROOT\";
+      pkgs = import f.inputs.nixpkgs { system = builtins.currentSystem; config.allowUnfree = true; };
+      m = f.lib.vscodeServerHomeModule { inherit pkgs;
+            exts = with (f.lib.vscodeExtensionsFor pkgs); nix ++ rust; };
+    in m.home.file.\".vscode-server/extensions\".source
+  " 2>&1
+}
+
+@test "the home fragment places the packaged dir, and places the same one" {
+  run build_dir
+  assert_success
+  local packaged="${lines[-1]}"
+
+  run eval_fragment_source
+  assert_success
+
+  # Equality, not "contains": a fragment pointing at a DIFFERENT env would still hold a plausible path.
+  assert_equal "${lines[-1]}" "$packaged/share/vscode/extensions"
+}
+
+@test "what the fragment points at is a real directory carrying the manifest" {
+  run eval_fragment_source
+  assert_success
+  local placed="${lines[-1]}"
+
+  # The subdir is the load-bearing half — `${env}` alone is one level too high and the server would find
+  # no extensions at all. Asserting the string in the test above cannot catch that; existence can.
+  assert [ -d "$placed" ]
+  assert [ -e "$placed/extensions.json" ]
+}
