@@ -74,6 +74,22 @@ in
             of the unfree ones reach anyone who did not ask for an editor.
           '';
         };
+
+        extensionsDir = mkOption {
+          type = types.package;
+          readOnly = true;
+          description = ''
+            The same set, PACKAGED as a directory a consumer places verbatim — the extension
+            directories plus the `extensions.json` the server needs. Place
+            `''${extensionsDir}/share/vscode/extensions`.
+
+            Prefer this over composing `extensions` by hand. A bare `buildEnv` of the list omits the
+            manifest, and a read-only extensions dir without one fails outright rather than degrading —
+            which is why every consumer that hand-wrapped the list produced a broken directory.
+
+            Still inert: building the option costs nothing until something places it.
+          '';
+        };
       };
 
       # mkhl.direnv loads the devShell into the extension host; without it the language
@@ -83,6 +99,20 @@ in
         ++ optionals cfg.errorlens.enable [ pkgs.vscode-extensions.usernamehw.errorlens ]
         ++ optionals (config.ai.claude.enable or false) [ pkgs.vscode-extensions.anthropic.claude-code ]
         ++ concatMap (name: optionals (enabled name) sets.${name}) (builtins.attrNames sets);
+
+      # The packaged form, composed from the list above so the two cannot drift. Inlined rather than
+      # calling `flake.lib.vscodeServerExtensions`: inside `mkPerSystemOption`, `config` is the PER-SYSTEM
+      # config and has no `flake` attribute, so reaching the lib from here is not available.
+      config.editors.vscode.extensionsDir = pkgs.buildEnv {
+        name = "vscode-server-extensions";
+        paths = cfg.extensions ++ [
+          (pkgs.writeTextFile {
+            name = "vscode-server-extensions-json";
+            text = pkgs.vscode-utils.toExtensionJson cfg.extensions;
+            destination = "/share/vscode/extensions/extensions.json";
+          })
+        ];
+      };
     }
   );
 }

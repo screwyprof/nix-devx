@@ -1,0 +1,10 @@
+# statix config. `repeated_keys` is disabled: this repo declares `flake.*` attributes at the point each
+# concern is configured — `flake.flakeModules`, `flake.lib.vscodeExtensionsFor`,
+# `flake.lib.vscodeServerExtensions`, `flake.templates` — each with its OWN explanatory comment. Module
+# attrsets auto-merge, so this is idiomatic and correct; collapsing them into one `flake = { … }` block
+# (what the lint wants) would bury the per-assignment documentation. All other lints stay on.
+#
+# Adopted from devbox, which disables it for the same idiom. This lint was already failing on `main`
+# before the assignment this repo added most recently — the count in the message moves, the verdict does
+# not.
+disabled = ["repeated_keys"]
