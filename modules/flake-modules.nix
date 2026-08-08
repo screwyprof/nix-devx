@@ -49,6 +49,29 @@
       ];
     };
 
+  # The same packaged dir, wrapped as a HOME-MANAGER MODULE — for a consumer that is extended with a
+  # fragment rather than handed a path.
+  #
+  #   inputs.nix-devx.lib.vscodeServerHomeModule { inherit pkgs; exts = [ … ]; }
+  #     -> a module setting home.file.".vscode-server/extensions"
+  #
+  # WHY A MODULE and not just the path. A generic home cannot be given per-project content by an attribute
+  # — an attrpath takes no argument — so the seam is `extendModules`, which takes MODULES. It also spares
+  # the home being EXTENDED from naming `.vscode-server/extensions` itself.
+  #
+  # ONE symlink, not per-entry links. Per-entry would let an ad-hoc `--install-extension` succeed, but
+  # home-manager prunes only what it managed, so that install is never tracked and survives every rebuild
+  # as undeclared drift. The cost of this direction is that such an install fails hard (`EACCES`, then an
+  # unhandled `Extract` exception) — the same cost the operator's client already pays with
+  # `mutableExtensionsDir = false`.
+  flake.lib.vscodeServerHomeModule =
+    { pkgs, exts }:
+    {
+      home.file.".vscode-server/extensions".source = "${
+        self.lib.vscodeServerExtensions { inherit pkgs exts; }
+      }/share/vscode/extensions";
+    };
+
   flake.templates = {
     minimal = {
       path = ./../templates/minimal;
