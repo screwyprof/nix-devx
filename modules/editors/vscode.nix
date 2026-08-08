@@ -48,11 +48,25 @@ in
           '';
         };
 
+        errorlens.enable = mkOption {
+          type = types.bool;
+          # PRESENTATIONAL, unlike direnv above — nothing fails without it. On by default because every
+          # language module here supplies an LSP, and this is what makes those diagnostics visible
+          # without hovering each one; a shell that enables a language and then cannot see its errors
+          # inline is the surprising default, not the other way round.
+          default = true;
+          description = ''
+            Include `usernamehw.errorlens`, which renders diagnostics inline beside the code.
+            Turn off to keep diagnostics in the Problems panel only.
+          '';
+        };
+
         extensions = mkOption {
           type = types.listOf types.package;
           readOnly = true;
           description = ''
-            VS Code extensions implied by the languages enabled in this shell, plus direnv.
+            VS Code extensions implied by the languages enabled in this shell, plus the
+            editor-core ones (direnv, errorlens).
 
             READ-ONLY and inert: enabling a language yields a toolchain, never an installed extension.
             A consumer opts in explicitly (a devbox session flake composes this into its declared set),
@@ -66,6 +80,7 @@ in
       # extensions below have no binaries.
       config.editors.vscode.extensions =
         optionals cfg.direnv.enable [ pkgs.vscode-extensions.mkhl.direnv ]
+        ++ optionals cfg.errorlens.enable [ pkgs.vscode-extensions.usernamehw.errorlens ]
         ++ optionals (config.ai.claude.enable or false) [ pkgs.vscode-extensions.anthropic.claude-code ]
         ++ concatMap (name: optionals (enabled name) sets.${name}) (builtins.attrNames sets);
     }
