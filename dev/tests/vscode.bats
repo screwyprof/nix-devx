@@ -115,6 +115,12 @@ eval_fragment_source() {
 }
 
 @test "what the fragment points at is a real directory carrying the manifest" {
+  # BUILD, not just eval. `nix eval` resolves an output path without realising it, so the on-disk
+  # assertions below would otherwise pass only because an earlier test in this file happened to build the
+  # same derivation — green in file order, red under `--filter` or on a cold store.
+  run build_dir
+  assert_success
+
   run eval_fragment_source
   assert_success
   local placed="${lines[-1]}"
