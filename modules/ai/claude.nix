@@ -63,6 +63,21 @@ in
     { config, pkgs, ... }:
     let
       cfg = config.ai.claude;
+
+      # ONE body, because the two behaviours differ by a single flag. Before this there were three
+      # wrapper bodies for two behaviours, and `cfg.package` appeared in five places — the pairing is
+      # what made that a hazard rather than clutter: inside each wrapper `runtimeInputs` puts a `claude`
+      # on PATH while the `exec` names an absolute store path, so touching one and not the other yields a
+      # shell where `claude` and whatever resolves it off PATH are DIFFERENT builds, with no error.
+      mkClaude =
+        skipPermissions:
+        pkgs.writeShellApplication {
+          name = "claude";
+          runtimeInputs = [ cfg.package ];
+          text = ''
+            exec ${cfg.package}/bin/claude ${lib.optionalString skipPermissions "--dangerously-skip-permissions "}"$@"
+          '';
+        };
     in
     {
       options.ai.claude = {
@@ -107,20 +122,7 @@ in
 
       config = mkIf cfg.enable {
         # Main wrapper respects the dangerouslySkipPermissions config
-        packages.claude-wrapper = pkgs.writeShellApplication {
-          name = "claude";
-          runtimeInputs = [ cfg.package ];
-
-          text =
-            if cfg.dangerouslySkipPermissions then
-              ''
-                exec ${cfg.package}/bin/claude --dangerously-skip-permissions "$@"
-              ''
-            else
-              ''
-                exec ${cfg.package}/bin/claude "$@"
-              '';
-        };
+        packages.claude-wrapper = mkClaude cfg.dangerouslySkipPermissions;
 
         # Main devShell - respects dangerouslySkipPermissions config
         ai.claude.devShell = pkgs.mkShellNoCC {
@@ -137,13 +139,7 @@ in
         ai.claude.devShellUnrestricted = pkgs.mkShellNoCC {
           nativeBuildInputs = with pkgs; [
             nodejs
-            (pkgs.writeShellApplication {
-              name = "claude";
-              runtimeInputs = [ cfg.package ];
-              text = ''
-                exec ${cfg.package}/bin/claude --dangerously-skip-permissions "$@"
-              '';
-            })
+            (mkClaude true)
           ];
 
           shellHook = claudeShellHook;
