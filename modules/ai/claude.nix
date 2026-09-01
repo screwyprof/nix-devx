@@ -63,6 +63,21 @@ in
     { config, pkgs, ... }:
     let
       cfg = config.ai.claude;
+
+      # ONE body, because the two behaviours differ by a single flag. Before this there were three
+      # wrapper bodies for two behaviours, and `cfg.package` appeared in five places — the pairing is
+      # what made that a hazard rather than clutter: inside each wrapper `runtimeInputs` puts a `claude`
+      # on PATH while the `exec` names an absolute store path, so touching one and not the other yields a
+      # shell where `claude` and whatever resolves it off PATH are DIFFERENT builds, with no error.
+      mkClaude =
+        skipPermissions:
+        pkgs.writeShellApplication {
+          name = "claude";
+          runtimeInputs = [ cfg.package ];
+          text = ''
+            exec ${cfg.package}/bin/claude ${lib.optionalString skipPermissions "--dangerously-skip-permissions "}"$@"
+          '';
+        };
     in
     {
       options.ai.claude = {
@@ -72,6 +87,24 @@ in
           type = types.bool;
           default = false;
           description = "Skip permission checks in Claude Code wrapper";
+        };
+
+        # nixpkgs PINS claude-code by a vendored manifest and bumping it is a human step, so the channel
+        # trails upstream by days — measured 2.1.245 in nixpkgs against 2.1.257 published. The package
+        # takes that manifest as an ARGUMENT (`manifest ? lib.importJSON ./manifest.json`), so overriding
+        # it is the supported seam: no patched `src`, and every platform in the file keeps its own
+        # checksum, which a hand-written `fetchurl` would silently get wrong off aarch64-linux.
+        #
+        # TO BUMP: one command, no hashes to compute by hand.
+        #   curl -fsS https://downloads.claude.ai/claude-code-releases/<version>/manifest.json \
+        #     > modules/ai/claude-manifest.json
+        # Anthropic publishes it in exactly the shape nixpkgs reads. Drop the file and this default when
+        # nixpkgs catches up and the pin stops being ahead.
+        package = mkOption {
+          type = types.package;
+          default = pkgs.claude-code.override { manifest = lib.importJSON ./claude-manifest.json; };
+          defaultText = "pkgs.claude-code, manifest-pinned ahead of nixpkgs";
+          description = "The claude-code package the wrapper and both devShells run.";
         };
 
         devShell = mkOption {
@@ -89,20 +122,7 @@ in
 
       config = mkIf cfg.enable {
         # Main wrapper respects the dangerouslySkipPermissions config
-        packages.claude-wrapper = pkgs.writeShellApplication {
-          name = "claude";
-          runtimeInputs = [ pkgs.claude-code ];
-
-          text =
-            if cfg.dangerouslySkipPermissions then
-              ''
-                exec ${pkgs.claude-code}/bin/claude --dangerously-skip-permissions "$@"
-              ''
-            else
-              ''
-                exec ${pkgs.claude-code}/bin/claude "$@"
-              '';
-        };
+        packages.claude-wrapper = mkClaude cfg.dangerouslySkipPermissions;
 
         # Main devShell - respects dangerouslySkipPermissions config
         ai.claude.devShell = pkgs.mkShellNoCC {
@@ -119,13 +139,7 @@ in
         ai.claude.devShellUnrestricted = pkgs.mkShellNoCC {
           nativeBuildInputs = with pkgs; [
             nodejs
-            (pkgs.writeShellApplication {
-              name = "claude";
-              runtimeInputs = [ pkgs.claude-code ];
-              text = ''
-                exec ${pkgs.claude-code}/bin/claude --dangerously-skip-permissions "$@"
-              '';
-            })
+            (mkClaude true)
           ];
 
           shellHook = claudeShellHook;
