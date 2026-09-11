@@ -21,14 +21,20 @@ configuration attrset. Handing over the attrset fails with
 
 ## Using one
 
-Copy the directory into the project's `session/` tree on the node and point the manifest at it:
+Copy the directory into the project's `session/` tree on the node and point the project at it. `--flake`
+takes an absolute path and is **persisted**, so a later bare `up` reuses it — there is no manifest to
+hand-edit:
 
 ```
-sudo cp -r <this dir>/<name>/. /work/projects/<name>/session/
-sudo jq '.session_flake = "/work/projects/<name>/session"' \
-  /work/projects/<name>/.devbox/manifest.json > /tmp/m && sudo mv /tmp/m /work/projects/<name>/.devbox/manifest.json
-devbox sandbox down <name> && devbox sandbox up <name>
+sudo mkdir -p /work/projects/<name>/session
+sudo install -o root -g root -m 644 <this dir>/<name>/flake.nix <this dir>/<name>/flake.lock \
+  /work/projects/<name>/session/
+devbox sandbox down <name>
+devbox sandbox up <name> --flake /work/projects/<name>/session
 ```
+
+`install` rather than `cp`, because the modes are DECLARED: the tree must end up `root:root` for the
+reason below, and `cp` would carry whatever the source happened to have.
 
 The `session/` tree is `root:root` on the node and reaches the cage **read-only**, at
 `/run/devbox/flake` — so the occupant can read the thing that defines its own environment and cannot
