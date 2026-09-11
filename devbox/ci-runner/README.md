@@ -4,11 +4,10 @@ The session flake for the `ci-runner` project. It extends the operator's cage ho
 `systemd.user.service`, so devbox places and roots the runner at every `up`. There is nothing to
 provision by hand.
 
-Point the project at it once:
+Point the project at it once. `--flake` is persisted, so every later bare `up` reuses it:
 
 ```
-sudo jq '.session_flake = "/work/projects/ci-runner/session"' \
-  /work/projects/ci-runner/.devbox/manifest.json > /tmp/m && sudo mv /tmp/m /work/projects/ci-runner/.devbox/manifest.json
+devbox sandbox up ci-runner --flake /work/projects/ci-runner/session
 ```
 
 (The `session/` tree is `root:root` on the node and reaches the cage **read-only** at
@@ -91,9 +90,16 @@ devbox sandbox ssh ci-runner -- rm -f ~/.local/share/github-runner/.runner \
 
 | entry | why |
 |---|---|
-| `.local/share/github-runner` | `.runner`, `.credentials`, `.credentials_rsaparams`, `.path`, `.env` — the registration. Losing it means re-registering. Those are **files**, and a `persist` entry must be a directory, so the whole tree is listed and `_work` rides along |
-| ~~`.config/systemd`~~ | **removed when this flake landed.** The unit is a store symlink home-manager re-places at every `up`, so persisting it serves nothing. It was required only while the unit was a hand-placed file |
+| `.local/share/github-runner` | the registration. Losing it means re-registering — see below |
 | `.claude`, `.config/GitHub` | agent memory; the runner's own `ActionsService` state |
+
+The registration is `.runner`, `.credentials`, `.credentials_rsaparams`, `.path` and `.env`. Those are
+**files**, and a `persist` entry must name a directory — so the whole tree is listed and `_work` rides
+along with it.
+
+`.config/systemd` was **removed when this flake landed**. The unit is a store symlink home-manager
+re-places at every `up`, so persisting it serves nothing; it was required only while the unit was a
+hand-placed file.
 
 ## Gotchas, each of which cost a debugging cycle
 
