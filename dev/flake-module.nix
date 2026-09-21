@@ -92,6 +92,9 @@
             ]))
             pkgs.delta
             pkgs.shellcheck
+            # vscode.bats compares extensions.json against the directory listing. Undeclared until now,
+            # so those tests failed on a missing interpreter rather than on what they assert.
+            pkgs.jq
           ];
 
           shellHook = ''
@@ -121,6 +124,9 @@
             ]))
             pkgs.delta
             pkgs.shellcheck
+            # vscode.bats compares extensions.json against the directory listing. Undeclared until now,
+            # so those tests failed on a missing interpreter rather than on what they assert.
+            pkgs.jq
           ];
 
           shellHook = ''

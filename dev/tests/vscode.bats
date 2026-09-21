@@ -53,18 +53,14 @@ build_dir() {
 
   # Case-folds deliberately: the directory is `golang.Go` while the manifest says `golang.go`, and the
   # server resolves case-insensitively. Asserting exact case would fail on a truth about VS Code, not ours.
+  # `comm -23` prints what is in the manifest but not on disk, so the output IS the missing list.
   run bash -c "
-    python3 - <<'PY'
-import json, os, sys
-d = '$dir'
-m = json.load(open(os.path.join(d, 'extensions.json')))
-dirs = {e.lower() for e in os.listdir(d) if e != 'extensions.json'}
-missing = [e['identifier']['id'] for e in m if e['identifier']['id'].lower() not in dirs]
-print('missing:', missing)
-sys.exit(1 if missing else 0)
-PY
+    comm -23 \
+      <(jq -r '.[].identifier.id | ascii_downcase' '$dir/extensions.json' | sort -u) \
+      <(ls -1 '$dir' | grep -vx extensions.json | tr '[:upper:]' '[:lower:]' | sort -u)
   "
   assert_success
+  assert_output ""
 }
 
 @test "the manifest lists exactly what was declared — no more, no less" {
@@ -72,18 +68,13 @@ PY
   assert_success
   local dir="${lines[-1]}/share/vscode/extensions"
 
-  # The property the manifest exists for: a REMOVAL must not linger. Counting both ways is what catches a
-  # manifest that is generated once and then reused across a changed selection.
+  # The property the manifest exists for: a REMOVAL must not linger. Comparing both ways is what catches a
+  # manifest that is generated once and then reused across a changed selection. `diff` exits 0 only on
+  # exact set equality, and on failure prints which side each stray entry came from.
   run bash -c "
-    python3 - <<'PY'
-import json, os, sys
-d = '$dir'
-m = json.load(open(os.path.join(d, 'extensions.json')))
-dirs = {e.lower() for e in os.listdir(d) if e != 'extensions.json'}
-ids  = {e['identifier']['id'].lower() for e in m}
-print('dirs:', sorted(dirs)); print('manifest:', sorted(ids))
-sys.exit(0 if dirs == ids else 1)
-PY
+    diff \
+      <(jq -r '.[].identifier.id | ascii_downcase' '$dir/extensions.json' | sort -u) \
+      <(ls -1 '$dir' | grep -vx extensions.json | tr '[:upper:]' '[:lower:]' | sort -u)
   "
   assert_success
 }
