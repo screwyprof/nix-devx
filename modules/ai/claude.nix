@@ -89,21 +89,20 @@ in
           description = "Skip permission checks in Claude Code wrapper";
         };
 
-        # nixpkgs PINS claude-code by a vendored manifest and bumping it is a human step, so the channel
-        # trails upstream by days — measured 2.1.245 in nixpkgs against 2.1.257 published. The package
-        # takes that manifest as an ARGUMENT (`manifest ? lib.importJSON ./manifest.json`), so overriding
-        # it is the supported seam: no patched `src`, and every platform in the file keeps its own
-        # checksum, which a hand-written `fetchurl` would silently get wrong off aarch64-linux.
+        # No vendored manifest. This used to default to
+        # `pkgs.claude-code.override { manifest = ./claude-manifest.json; }` to run ahead of a lagging
+        # channel, which worked until nixpkgs kept the argument named `manifest` while changing what it
+        # must contain (`manifest.json` + `installBin` -> `manifest.zst.json` + `unzstd`). Consumers set
+        # `inputs.nixpkgs.follows`, so a manifest vendored here always meets a nixpkgs of a different
+        # era, and the mismatch cannot fail at eval — only in installPhase, on their lock bump.
         #
-        # TO BUMP: one command, no hashes to compute by hand.
-        #   curl -fsS https://downloads.claude.ai/claude-code-releases/<version>/manifest.json \
-        #     > modules/ai/claude-manifest.json
-        # Anthropic publishes it in exactly the shape nixpkgs reads. Drop the file and this default when
-        # nixpkgs catches up and the pin stops being ahead.
+        # The pin also bought nothing anymore: nixpkgs' update.sh follows the `latest` channel.
+        # If a future lag justifies pinning, set this option in the CONSUMER, where the manifest and the
+        # nixpkgs reading it are locked together.
         package = mkOption {
           type = types.package;
-          default = pkgs.claude-code.override { manifest = lib.importJSON ./claude-manifest.json; };
-          defaultText = "pkgs.claude-code, manifest-pinned ahead of nixpkgs";
+          default = pkgs.claude-code;
+          defaultText = lib.literalExpression "pkgs.claude-code";
           description = "The claude-code package the wrapper and both devShells run.";
         };
 
