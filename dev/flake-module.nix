@@ -56,11 +56,22 @@
       # Configure Claude Code
       ai.claude.enable = true;
 
-      # Configure MCP servers
+      # Configure MCP servers.
+      #
+      # Both packages come from nixpkgs, not mcp-servers-nix: the latter compiles the
+      # modelcontextprotocol/servers monorepo unpatched, which stopped building once nixpkgs'
+      # `typescript` became 7.x (tsgo defaults `types` to `[]`, so `@types/node` never loads).
+      # nixpkgs patches `types = ["node"]`, and its build is newer and cached.
       mcp-servers = {
         programs = {
-          memory.enable = true;
-          sequential-thinking.enable = true;
+          memory = {
+            enable = true;
+            package = pkgs.mcp-server-memory;
+          };
+          sequential-thinking = {
+            enable = true;
+            package = pkgs.mcp-server-sequential-thinking;
+          };
         };
         flavors.claude-code.enable = true;
       };
