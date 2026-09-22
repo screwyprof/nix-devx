@@ -35,6 +35,15 @@ in
       options.languages.rust = {
         enable = mkEnableOption "Rust language tooling";
 
+        srcDir = mkOption {
+          type = types.str;
+          default = ".";
+          description = ''
+            Path to the Rust source directory relative to the git repository root.
+            Used by hooks to locate Cargo.toml when the crate lives in a subdirectory.
+          '';
+        };
+
         toolchain = mkOption {
           type = types.nullOr types.package;
           default = null;
@@ -151,6 +160,8 @@ in
               entry = toString (
                 pkgs.writeShellScript "cargo-fmt-hook" ''
                   export PATH="${toolchainBin}:$PATH"
+                  ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+                  cd "$ROOT/${cfg.srcDir}"
                   exec ${cargoBin} fmt --check
                 ''
               );
@@ -164,6 +175,8 @@ in
               entry = toString (
                 pkgs.writeShellScript "clippy-hook" ''
                   export PATH="${toolchainBin}:$PATH"
+                  ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+                  cd "$ROOT/${cfg.srcDir}"
                   exec ${cargoBin} clippy -- -D warnings
                 ''
               );
