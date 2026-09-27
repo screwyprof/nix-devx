@@ -22,10 +22,31 @@ in
       hasTreefmt = options ? treefmt;
       hasPreCommit = options ? pre-commit;
 
-      # gci v0.13.x is broken with Go 1.26 due to linkname checks; use v0.14.0
+      # Every tool is built with cfg.package. nixpkgs builds gopls with
+      # buildGoLatestModule and golangci-lint with buildGo1NNModule, so rewrite
+      # whichever buildGo*Module argument a package takes rather than naming it.
+      buildGoModule = pkgs.buildGoModule.override { go = cfg.package; };
+      withGo =
+        pkg:
+        pkg.override (
+          args:
+          lib.mapAttrs (_: _: buildGoModule) (
+            lib.filterAttrs (n: _: builtins.match "buildGo(Latest|[0-9]+)?Module" n != null) args
+          )
+          // lib.optionalAttrs (args ? go) { go = cfg.package; }
+        );
+
       goPkgs = pkgs.extend (
         _final: prev: {
-          gci = prev.gci.overrideAttrs (old: {
+          go = cfg.package;
+          gopls = withGo prev.gopls;
+          delve = withGo prev.delve;
+          gotools = withGo prev.gotools;
+          golangci-lint = withGo prev.golangci-lint;
+          gofumpt = withGo prev.gofumpt;
+          golines = withGo prev.golines;
+          # gci v0.13.x is broken with Go 1.26 due to linkname checks; use v0.14.0
+          gci = (withGo prev.gci).overrideAttrs (old: {
             version = "0.14.0";
             src = prev.fetchFromGitHub {
               owner = "daixiang0";
@@ -46,6 +67,17 @@ in
     {
       options.languages.go = {
         enable = mkEnableOption "Go language tooling";
+
+        package = mkOption {
+          type = types.package;
+          default = pkgs.go;
+          defaultText = lib.literalExpression "pkgs.go";
+          example = lib.literalExpression "pkgs.go_1_26";
+          description = ''
+            Go toolchain for the shell, hooks and formatters. gopls, delve, gotools,
+            golangci-lint, gofumpt, golines and gci are rebuilt with it.
+          '';
+        };
 
         srcDir = mkOption {
           type = types.str;
@@ -97,6 +129,9 @@ in
 
             shellHook = ''
               export GOPATH=''${GOPATH:-${cfg.gopath}}
+              # Never switch away from cfg.package (nixpkgs' go.env says auto).
+              # Exported here, not via env: inputsFrom merges shellHook, drops env.
+              export GOTOOLCHAIN=local
               mkdir -p "$GOPATH/pkg/mod"
 
               echo "Go development environment loaded"
@@ -121,10 +156,13 @@ in
             golangci-lint = {
               enable = true;
               name = "golangci-lint";
+              # git-hooks.nix puts the hook package on every devShell PATH; its
+              # default is pkgs.golangci-lint, built with a different Go.
+              package = goPkgs.golangci-lint;
               entry = toString (
                 pkgs.writeShellScript "golangci-lint-hook" ''
                   export PATH="${goPkgs.go}/bin:$PATH"
-                  export CGO_ENABLED=0
+                  export CGO_ENABLED=0 GOTOOLCHAIN=local
                   ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
                   cd "$ROOT/${cfg.srcDir}"
                   exec ${goPkgs.golangci-lint}/bin/golangci-lint run ./...
@@ -147,7 +185,7 @@ in
               command = toString (
                 pkgs.writeShellScript "golangci-lint-fmt" ''
                   export PATH="${goPkgs.go}/bin:$PATH"
-                  export CGO_ENABLED=0
+                  export CGO_ENABLED=0 GOTOOLCHAIN=local
                   ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
                   cd "$ROOT/${cfg.srcDir}"
                   exec ${goPkgs.golangci-lint}/bin/golangci-lint run --fix ./...
