@@ -10,6 +10,7 @@
     # nix-devx modules (imported by path)
     ../modules/languages/nix.nix
     ../modules/languages/rust.nix
+    ../modules/languages/go.nix
     ../modules/ai/claude.nix
 
     # Dev-only external modules
@@ -31,6 +32,7 @@
         nix.enable = true;
         nix.hooks = true;
         rust.enable = true;
+        go.enable = true;
       };
 
       # Configure nix-filter for this project
@@ -141,6 +143,9 @@
 
         # Direct shell — verifies tools and env vars
         "rust-test" = config.languages.rust.devShell;
+
+        # Direct shell — verifies every Go tool is built with the configured Go
+        "go-test" = config.languages.go.devShell;
 
         # Nested shell — verifies env vars propagate through inputsFrom
         "rust-nested" = pkgs.mkShellNoCC {

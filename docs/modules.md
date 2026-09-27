@@ -27,13 +27,14 @@ nix-devx provides flake-parts modules for development environments.
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `enable` | bool | false | Enable Go tooling |
+| `package` | package | `pkgs.go` | Go toolchain; every tool below is built with it (e.g. `pkgs.go_1_26`) |
 | `hooks` | bool | false | Enable pre-commit hooks |
 | `gobin` | nullOr str | null | GOBIN directory (null for per-project) |
 | `gopath` | str | `$XDG_DATA_HOME/go` | GOPATH for module cache |
 
 **Provides:** `languages.go.devShell`
 
-**Tools:** go, gopls, delve, gotools, golangci-lint, gofumpt, golines, gci
+**Tools:** go, gopls, delve, gotools, golangci-lint, gofumpt, golines, gci — all built with `package`; `GOTOOLCHAIN=local`
 
 **Hooks:** golangci-lint
 
