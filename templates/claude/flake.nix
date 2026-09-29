@@ -55,18 +55,8 @@
             # Optional: Enable MCP servers
             mcp-servers = {
               programs = {
-                # memory and sequential-thinking come from nixpkgs, not mcp-servers-nix: the latter
-                # compiles the modelcontextprotocol/servers monorepo unpatched, which stopped
-                # building once nixpkgs' `typescript` became 7.x (tsgo defaults `types` to `[]`, so
-                # `@types/node` never loads). nixpkgs patches it, and its build is newer and cached.
-                memory = {
-                  enable = true;
-                  package = pkgs.mcp-server-memory;
-                };
-                sequential-thinking = {
-                  enable = true;
-                  package = pkgs.mcp-server-sequential-thinking;
-                };
+                memory.enable = true;
+                sequential-thinking.enable = true;
               };
               flavors.claude-code.enable = true;
             };
